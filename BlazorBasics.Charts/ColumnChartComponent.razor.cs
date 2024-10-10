@@ -8,7 +8,7 @@ public partial class ColumnChartComponent
 
     private string WrapperCss = "";
     [Parameter] public IEnumerable<ChartSegment> Topics { get; set; }
-    [Parameter] public ColumnsChartParams Parameters { get; set; } = new();
+    [Parameter] public ColumnsBarChartParams Parameters { get; set; } = new();
 
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object> Attributes { get; set; }

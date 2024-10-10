@@ -1,6 +1,6 @@
 ﻿namespace BlazorBasics.Charts.Helpers;
 
-internal static class ChartMathHelpers
+public static class ChartMathHelpers
 {
     public static double CalculatePercentage(double newValue, double originalValue)
     {

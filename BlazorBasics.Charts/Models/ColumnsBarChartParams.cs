@@ -1,8 +1,8 @@
 ﻿namespace BlazorBasics.Charts.Models;
 
-public class BarChartParams
+public class ColumnsBarChartParams
 {
-    public BarChartParams(string backgroundColour = "#D3D3D3", int thickness = 20, int dimension = 40,
+    public ColumnsBarChartParams(string backgroundColour = "#D3D3D3", int thickness = 20, int dimension = 100,
         bool showValues = true,
         IEnumerable<ChartColor> chartColours = null)
     {
