@@ -1,0 +1,19 @@
+﻿<div class="column-chart @WrapperCss" style="@Style">
+    @foreach (var topic in Topics)
+    {
+        <div class="columnchart-container" title="@topic.Name - @topic.Value">
+            @if (Parameters.ShowValues)
+            {
+                <div class="columnchart-labels">
+                    <span class="columnchart-quantity">@topic.Value</span>
+                </div>
+            }
+            <div class="columnchart-background">
+                <div class="columnchart-foreground" style="background-color: @GetColour(topic);height: @GetPercentageHeight(topic.Value).ToString(CultureInfo.InvariantCulture)%;"></div>
+            </div>
+            <div class="columnchart-labels">
+                <span class="columnchart-name">@topic.Name</span>
+            </div>
+        </div>
+    }
+</div>
