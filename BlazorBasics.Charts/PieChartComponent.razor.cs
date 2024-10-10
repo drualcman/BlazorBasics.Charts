@@ -80,7 +80,7 @@ public partial class PieChartComponent : IDisposable
             if (OnHover is not null)
                 result = OnHover.Invoke(SegmentHandler.HoveredChart);
             else
-                result =
+                result = SegmentHandler.HoveredChart.SetTitleTopic is not null ? SegmentHandler.HoveredChart.ShowTitle() :
                     $"{SegmentHandler.HoveredChart.Name} {SegmentHandler.HoveredChart.Value.ToString("F2", CultureInfo.InvariantCulture)}%";
         }
 

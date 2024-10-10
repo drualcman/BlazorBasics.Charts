@@ -1,3 +1,6 @@
+[![Nuget](https://img.shields.io/nuget/v/BlazorBasics.Charts?style=for-the-badge)](https://www.nuget.org/packages/BlazorBasics.Charts)
+[![Nuget](https://img.shields.io/nuget/dt/BlazorBasics.Charts?style=for-the-badge)](https://www.nuget.org/packages/BlazorBasics.Charts)
+
 # Description
 Create charts simples from data. You can create a Pie Chart, Columns Chart or Bar Chart.
 # How to use simple way

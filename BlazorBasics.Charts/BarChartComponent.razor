@@ -1,7 +1,7 @@
 ﻿<div class="bar-chart @WrapperCss" style="@Style">
     @foreach (var topic in Topics)
     {
-        <div class="linechart-container" title="@topic.Name - @topic.Value">
+        <div class="linechart-container" title="@topic.ShowTitle()">
             <div class="linechart-background">
                 <div class="linechart-foreground" style="background-color: @GetColour(topic); width: @GetPercentageWidth(topic.Value).ToString(CultureInfo.InvariantCulture)%;"></div>
             </div>
@@ -10,7 +10,7 @@
                 {
                     <span class="linechart-quantity">@topic.Value</span>
                 }
-                <span class="linechart-name">@topic.Name color => @GetColour(topic)</span>
+                <span class="linechart-name">@topic.Name</span>
             </div>
         </div>
     }

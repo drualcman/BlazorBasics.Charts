@@ -1,7 +1,7 @@
 ﻿<div class="column-chart @WrapperCss" style="@Style">
     @foreach (var topic in Topics)
     {
-        <div class="columnchart-container" title="@topic.Name - @topic.Value">
+        <div class="columnchart-container" title="@topic.ShowTitle()">
             @if (Parameters.ShowValues)
             {
                 <div class="columnchart-labels">

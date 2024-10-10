@@ -4,19 +4,19 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.0.0</Version>
+		<Version>1.0.1</Version>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Authors>Sergi Ortiz Gomez</Authors>
 		<Company>DrUalcman</Company>
 		<Description>Simple Charts (Pie, Columns, Bars) to use in Razor Projects.</Description>
 		<Copyright>Free</Copyright>
-		<RepositoryUrl>https://github.com/drualcman/BlazorBasics.Charts.Pie</RepositoryUrl>
+		<RepositoryUrl>https://github.com/drualcman/BlazorBasics.Charts</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageTags>captcha;blazor;blazor server; blazor webassembly</PackageTags>
 		<PackageId>BlazorBasics.Charts</PackageId>
 		<Product>BlazorBasics.Charts</Product>
-		<PackageReleaseNotes>First Release.</PackageReleaseNotes>
+		<PackageReleaseNotes>Add function to personalize title help in ChartSegments. Update documentation.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>

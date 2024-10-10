@@ -7,4 +7,9 @@ public class ChartSegment
     public bool IsSelected { get; set; }
     public string ChartColor { get; set; }
     public string LabelColor { get; set; }
+    public Func<ChartSegment, string> SetTitleTopic { get; set; }
+    internal string ShowTitle()
+    {
+        return SetTitleTopic is not null ? SetTitleTopic(this) : $"{this.Name}: {this.Value}";
+    }
 }
