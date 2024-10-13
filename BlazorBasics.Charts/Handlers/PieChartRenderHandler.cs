@@ -36,8 +36,10 @@ internal class PieChartRenderHandler
         {
             var value = lastValue + Math.Round(pieSegments[i].Value, 2);
             int colourIndex = i < Params.MaxColours ? i : 0;
-            pieSegments[i].ChartColor = Params.ChartColors[colourIndex].Background;
-            pieSegments[i].LabelColor = Params.ChartColors[colourIndex].Foreground;
+            if(string.IsNullOrEmpty(pieSegments[i].ChartColor))
+                pieSegments[i].ChartColor = Params.ChartColors[colourIndex].Background;
+            if(string.IsNullOrEmpty(pieSegments[i].LabelColor))
+                pieSegments[i].LabelColor = Params.ChartColors[colourIndex].Foreground;
             segments.Add(new PieSegment(
                 i,
                 pieSegments[i],
