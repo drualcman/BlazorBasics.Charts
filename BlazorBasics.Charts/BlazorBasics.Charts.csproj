@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.0.3</Version>
+		<Version>1.1.4</Version>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Authors>Sergi Ortiz Gomez</Authors>
@@ -16,7 +16,7 @@
 		<PackageTags>captcha;blazor;blazor server; blazor webassembly</PackageTags>
 		<PackageId>BlazorBasics.Charts</PackageId>
 		<Product>BlazorBasics.Charts</Product>
-		<PackageReleaseNotes>Add the CSS like embedded assembly files to ensure can be used when render from server side and need to read the CSS.</PackageReleaseNotes>
+		<PackageReleaseNotes>Target NET8 and NET9. Removed from CSS google fonts and force use some test colours.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -45,7 +45,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.10" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.10" Condition="'$(TargetFramework)' == 'net8.0'" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.0" Condition="'$(TargetFramework)' == 'net9.0'" />
 	</ItemGroup>
 
 	<ItemGroup>
