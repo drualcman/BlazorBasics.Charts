@@ -4,25 +4,26 @@
 		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.1.4</Version>
+		<Version>1.1.5</Version>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Authors>Sergi Ortiz Gomez</Authors>
 		<Company>DrUalcman</Company>
-		<Description>Simple Charts (Pie, Columns, Bars) to use in Razor Projects.</Description>
+		<Description>Simple Charts (Pie, Columns, Bars, Ring percentage) to use in Razor Projects.</Description>
 		<Copyright>Free</Copyright>
 		<RepositoryUrl>https://github.com/drualcman/BlazorBasics.Charts</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageTags>captcha;blazor;blazor server; blazor webassembly</PackageTags>
 		<PackageId>BlazorBasics.Charts</PackageId>
 		<Product>BlazorBasics.Charts</Product>
-		<PackageReleaseNotes>Target NET8 and NET9. Removed from CSS google fonts and force use some test colours.</PackageReleaseNotes>
+		<PackageReleaseNotes>Add Ring percentage component. Update nugets.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<EmbeddedResource Include="ColumnChartComponent.razor.css" />
 		<EmbeddedResource Include="BarChartComponent.razor.css" />
 		<EmbeddedResource Include="PieChartComponent.razor.css" />
+		<EmbeddedResource Include="RingPercentageComponent.razor.css" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -45,8 +46,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.10" Condition="'$(TargetFramework)' == 'net8.0'" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.0" Condition="'$(TargetFramework)' == 'net9.0'" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.13" Condition="'$(TargetFramework)' == 'net8.0'" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.2" Condition="'$(TargetFramework)' == 'net9.0'" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,0 +1,31 @@
+﻿.progress-ring {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--Width);
+    height: var(--Height);
+}
+
+.progress-ring__circle-bg {
+    stroke: var(--BackgroundColor); 
+    stroke-width: var(--StrokeWidth);
+    fill: none;
+}
+
+.progress-ring__circle-el {
+    transition: stroke-dashoffset 0.6s ease 0s;
+    transform: rotate(180deg);
+    transform-origin: center;
+    stroke: url('#progress-ring-gradient');
+    stroke-width: var(--StrokeWidth);
+    stroke-dasharray: var(--Circumference);
+    stroke-dashoffset: var(--Offset);
+    stroke-linecap: butt;
+    fill: none;
+}
+
+.progress-ring__value {
+    position: absolute;
+    color: var(--LabelColor); 
+}

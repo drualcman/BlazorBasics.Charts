@@ -1,0 +1,17 @@
+﻿<div class="progress-ring @WrapperCss" style="@Style">
+    <svg width="var(--Width)" height="var(--Height)" viewBox="0 0 120 120">
+        <defs>
+            <linearGradient id="progress-ring-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:var(--FromColor)" />
+                <stop offset="100%" style="stop-color:var(--ToColor)" />
+            </linearGradient>
+        </defs>
+        <circle class="progress-ring__circle-bg" cx="60" cy="60" r="52" fill="none" />
+        <path d="M 60 8
+               a 52 52 0 0 1 0 104
+               a 52 52 0 0 1 0 -104"
+              class="progress-ring__circle-el"></path>
+    </svg>
+    <span class="progress-ring__value" style="font-size: @CalculateFontSize();">@Percentage%</span>
+</div>
+
