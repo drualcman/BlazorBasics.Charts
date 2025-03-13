@@ -81,12 +81,17 @@
             @(GetSelectedPointLabelMarkup())
         </div>
     }
-    <div class="legend">
-        @foreach(LineSeries serie in ChartData)
-        {
-            <div class="line" @onclick="() => OnSelectLegend(serie)" @onclick:stopPropagation>
-                @GetLeyendLabelMarkup(new LineData(serie.Name, serie.Color, []))
-            </div>
-        }
-    </div>
+
+    @if(Parameters.ShowLegend)
+    {
+        <div class="legend">
+            @foreach(LineSeries serie in ChartData)
+            {
+                <div class="line" @onclick="() => OnSelectLegend(serie)" @onclick:stopPropagation>
+                    @GetLeyendLabelMarkup(new LineData(serie.Name, serie.Color, []))
+                </div>
+            }
+        </div>
+    }
+
 </div>

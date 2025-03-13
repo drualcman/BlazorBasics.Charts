@@ -14,8 +14,9 @@ public class LineChartParams(
     int stepsY = 1,
     bool showX = true,
     bool showY = true,
+    bool showLegend = true,
     Func<string, string> formaterLabelPopup = null,
-    Func<LineData, string> leyendLabel = null
+    Func<LineData, string> legendLabel = null
     )
 {
     public int Width => width;
@@ -31,6 +32,7 @@ public class LineChartParams(
     public int StepsY => stepsY;
     public bool ShowX => showX;
     public bool ShowY => showY;
+    public bool ShowLegend => showLegend;
     public Func<string, string> FormaterLabelPopup => formaterLabelPopup;
-    public Func<LineData, string> LegendLabel => leyendLabel;
+    public Func<LineData, string> LegendLabel => legendLabel;
 }
