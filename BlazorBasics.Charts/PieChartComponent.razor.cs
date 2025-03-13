@@ -5,8 +5,9 @@ public partial class PieChartComponent : IDisposable
     private PieChartAnimationHandler AnimationHandler;
 
     private string LabelStyle = "display: none;";
+    private string BiggestStyle = "display: block;";
     private PieChartRenderHandler RenderHandler;
-    private PieChartSegmentHandler SegmentHandler = new();
+    private PieChartSegmentHandler SegmentHandler;
     private string Style;
 
     private string WrapperCss = "";
@@ -45,6 +46,7 @@ public partial class PieChartComponent : IDisposable
             AnimationHandler.OnAnimation += () => InvokeAsync(StateHasChanged);
             AnimationHandler.StartAnimationSequence();
         }
+        SegmentHandler = new(Parameters.SeparateBiggerByDefault);
     }
 
     public void UpdateData(IReadOnlyList<ChartSegment> data)
@@ -56,6 +58,7 @@ public partial class PieChartComponent : IDisposable
     private void Leave()
     {
         LabelStyle = "display:none;";
+        BiggestStyle = "display:block;";
         SegmentHandler.SetLeave();
     }
 
@@ -70,7 +73,8 @@ public partial class PieChartComponent : IDisposable
     private void ShowLabel(PieSegment segment, MouseEventArgs e)
     {
         SegmentHandler.SetHover(segment);
-        LabelStyle = "display:block;";
+        LabelStyle = $"display:block; {GetPosition(segment)}";
+        BiggestStyle = "display:none;";
     }
 
     private MarkupString ShowLabelData()

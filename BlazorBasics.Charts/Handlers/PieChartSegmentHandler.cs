@@ -1,6 +1,6 @@
 ﻿namespace BlazorBasics.Charts.Handlers;
 
-internal class PieChartSegmentHandler
+internal class PieChartSegmentHandler(bool SeparateBiggerByDefault)
 {
     public PieSegment HoveredPie { get; private set; }
     public PieSegment SelectedPie { get; private set; }
@@ -11,36 +11,36 @@ internal class PieChartSegmentHandler
 
     public void SetLeave()
     {
-        if (SelectedPie is null) HoveredPie = null;
-        else HoveredPie = SelectedPie;
+        if(SelectedPie is null)
+            HoveredPie = null;
+        else
+            HoveredPie = SelectedPie;
     }
 
     public void SelectPie(PieSegment segment)
     {
-        if (SelectedPie is not null && SelectedPie == segment) SelectedPie = null;
-        else SelectedPie = segment;
+        if(SelectedPie is not null && SelectedPie == segment)
+            SelectedPie = null;
+        else
+            SelectedPie = segment;
     }
 
     public bool IsActive(PieSegment segment)
     {
         bool result;
-        if (HoveredPie is not null) result = HoveredPie == segment;
-        else result = false;
+        if(HoveredPie is not null)
+            result = HoveredPie == segment;
+        else
+            result = false;
         return result;
     }
 
-    public bool IsLargest(PieSegment segment)
-    {
-        return HoveredPie is null && segment.IsLargest;
-    }
+    public bool IsLargest(PieSegment segment) =>
+        SeparateBiggerByDefault && (HoveredPie is null && segment.IsLargest);
 
-    public bool ShouldTransform(PieSegment segment)
-    {
-        return IsActive(segment) || IsLargest(segment);
-    }
+    public bool ShouldTransform(PieSegment segment) =>
+        IsActive(segment) || IsLargest(segment);
 
-    public void SetHover(PieSegment segment)
-    {
+    public void SetHover(PieSegment segment) =>
         HoveredPie = segment;
-    }
 }

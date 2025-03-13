@@ -7,7 +7,7 @@ internal class PieChartRenderHandler
 
     public PieChartRenderHandler(PieChartParams parameters)
     {
-        Handler = new PieChartAnglesHandler(parameters.SeparationOffset);
+        Handler = new PieChartAnglesHandler(parameters.SeparationOffset + parameters.SeparationOnSelectOffset);
         Params = parameters;
     }
 

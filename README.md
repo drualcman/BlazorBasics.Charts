@@ -194,26 +194,25 @@ Example about Line Chart.
 ```
 Also you can set some parameters
 ``` csharp
-public class LineChartParams
+public class LineChartParams(
+    int width = 600,
+    int height = 300,
+    string backgroundColor = "transparent",
+    string axisStroke = "black",
+    int axisWidth = 2,
+    string gridLineStroke = "#ddd",
+    int gridWidth = 1,
+    string lineSeriesFill = "none",
+    int lineSeriesWidth = 1,
+    int dotRadio = 4,
+    int stepsY = 1,
+    bool showX = true,
+    bool showY = true,
+    bool showLegend = true,
+    Func<string, string> formaterLabelPopup = null,
+    Func<LineData, string> legendLabel = null
+    )
 {
-    public LineChartParams(
-        int width = 600,
-        int height = 300,
-        string backgroundColor = "transparent",
-        string axisStroke = "black",
-        int axisWidth = 2,
-        string gridLineStroke = "#ddd",
-        int gridWidth = 1,
-        string lineSeriesFill = "none",
-        int lineSeriesWidth = 1,
-        int dotRadio = 4,
-        int stepsY = 1,
-        bool showX = true,
-        bool showY = true,
-        Func<string, string> formaterLabelPopup = null,
-        Func<LineData, string> leyendLabel = null
-        )
-
     public int Width => width;
     public int Height => height;
     public string BackgroundColor => backgroundColor;
@@ -227,8 +226,9 @@ public class LineChartParams
     public int StepsY => stepsY;
     public bool ShowX => showX;
     public bool ShowY => showY;
+    public bool ShowLegend => showLegend;
     public Func<string, string> FormaterLabelPopup => formaterLabelPopup;
-    public Func<LineData, string> LegendLabel => leyendLabel;
+    public Func<LineData, string> LegendLabel => legendLabel;
 }
 ```
 Then you can do

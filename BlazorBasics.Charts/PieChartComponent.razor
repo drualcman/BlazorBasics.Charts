@@ -7,14 +7,15 @@
                 {
                     var segment = RenderHandler.Segments[i];
                     <path d="@RenderHandler.CreateSvgPieSegment(segment)" fill="@segment.Pie.ChartColor"
-                          @onclick="() => PieClick(segment)"
-                          @onmouseenter="e => ShowLabel(segment, e)"
-                          @onmouseleave="() => Leave()"
-                          style="@(GetTransformStyle(segment) + AnimationHandler?.SegmentStyles[i])">
+                    @onclick="() => PieClick(segment)"
+                    @onmouseenter="e => ShowLabel(segment, e)"
+                    @onmouseleave="() => Leave()"
+                    class="@(segment.Pie.IsSelected ? "is-selected":"")"
+                    style="@(GetTransformStyle(segment) + AnimationHandler?.SegmentStyles[i])">
                     </path>
                 }
             </svg>
-            @if (Parameters.ShowLabels)
+            @if(Parameters.ShowLabels)
             {
                 foreach(var segment in RenderHandler.Segments)
                 {
@@ -23,7 +24,15 @@
             }
             else
             {
-                <div class="pie-label" style="@LabelStyle">@ShowLabelData()</div>                
+                if(Parameters.ShowBiggestLabel)
+                {
+                    PieSegment segment = RenderHandler.Segments.FirstOrDefault(p => p.IsLargest == true) ?? null;
+                    if(segment is not null)
+                    {
+                        <div class="pie-label" style="@BiggestStyle @GetPosition(segment)">@ShowLabelData(segment.Pie)</div>
+                    }
+                }
+                <div class="pie-label" style="@LabelStyle">@ShowLabelData()</div>
             }
         </div>
         @if(ChildContent is null)
