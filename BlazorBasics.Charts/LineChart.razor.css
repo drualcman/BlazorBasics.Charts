@@ -1,0 +1,65 @@
+﻿.chart-multiline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+
+}
+    .chart-multiline .chart {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    .chart-multiline ::deep .line-chart {
+        background-color: var(--background-color);
+    }
+
+    .chart-multiline ::deep .axis {
+        stroke: var(--axis-stroke);
+        stroke-width: var(--axis-width);
+    }
+
+    .chart-multiline ::deep .grid-line {
+        stroke: var(--grid-line-stroke);
+        stroke-width: var(--grid-line-width);
+    }
+
+    .chart-multiline ::deep .line-series {
+        fill: var(--line-series-fill);
+        stroke-width: var(--line-series-width);
+    }
+
+    .chart-multiline .line-data-popup {
+        position: absolute;
+        transform: translate(-50%, -100%);
+    }
+
+    .chart-multiline .legend {
+        width: 100%;
+        margin-top: 10px;
+        display: flex;
+        gap: 16px;
+        text-align: center;
+        justify-content: center;
+        align-items: center;
+    }
+
+        .chart-multiline .legend .line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-align: center;
+        }
+
+            .chart-multiline .legend .line ::deep span {
+                width: 100%;
+                text-align: center;
+            }
+
+            .chart-multiline .legend .line ::deep .dot {
+                width: 14px;
+                height: 14px;
+                border-radius: 50%;
+            }

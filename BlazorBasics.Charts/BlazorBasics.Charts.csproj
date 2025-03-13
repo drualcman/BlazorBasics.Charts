@@ -9,14 +9,14 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Authors>Sergi Ortiz Gomez</Authors>
 		<Company>DrUalcman</Company>
-		<Description>Simple Charts (Pie, Columns, Bars, Ring percentage) to use in Razor Projects.</Description>
+		<Description>Simple Charts (Pie, Columns, Bars, Lines, Ring percentage) to use in Razor Projects.</Description>
 		<Copyright>Free</Copyright>
 		<RepositoryUrl>https://github.com/drualcman/BlazorBasics.Charts</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageTags>captcha;blazor;blazor server; blazor webassembly</PackageTags>
 		<PackageId>BlazorBasics.Charts</PackageId>
 		<Product>BlazorBasics.Charts</Product>
-		<PackageReleaseNotes>Add Ring percentage component. Update nugets.</PackageReleaseNotes>
+		<PackageReleaseNotes>Add Ring percentage component. Add Lines Chart component. Update nugets.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>

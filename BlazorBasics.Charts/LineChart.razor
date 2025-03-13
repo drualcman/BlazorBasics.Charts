@@ -1,0 +1,92 @@
+﻿<div class="chart-multiline" style="
+    --background-color: @Parameters.BackgroundColor;
+    --axis-stroke: @Parameters.AxisStroke;
+    --axis-width: @Parameters.AxisWidth;
+    --grid-line-stroke: @Parameters.GridLineStroke;
+    --grid-line-width: @Parameters.GridWidth;
+    --line-series-fill: @Parameters.LineSeriesFill;
+    --line-series-width: @Parameters.LineSeriesWidth;
+    width: @(Parameters.Width)px;
+    height: @(Parameters.Height)px;" @onclick=CancelSelections>
+    <div class="chart">
+        <svg width="100%" height="100%" viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" preserveAspectRatio="none" class="line-chart">
+            <!-- Y Axis -->
+            <line x1="@MarginLeft" y1="@MarginTop + AxisGap" x2="@MarginLeft" y2="@(Parameters.Height - MarginBottom)" class="axis" />
+
+            <!-- X Axis -->
+            <line x1="@MarginLeft" y1="@(Parameters.Height - MarginBottom)" x2="@(Parameters.Width - MarginRight + AxisGap)" y2="@(Parameters.Height - MarginBottom)" class="axis" />
+
+            <!-- Y Labels and grid lines -->
+            @if(Parameters.ShowY)
+            {
+                foreach(MarkupString label in GetYLabels())
+                {
+                    @label
+                }
+            }
+
+            <!-- X Labels and grid lines -->
+            @if(Parameters.ShowX)
+            {
+                foreach(MarkupString label in GetXLabels())
+                {
+                    @label
+                }
+            }
+
+            <!-- Dots adn lines -->
+            @foreach(LineSeries serie in ChartData)
+            {
+                if(SelectedSerie is not null && SelectedSerie.Equals(serie))
+                {
+                    <polyline points="@GetPoints(serie.Values)" class="line-series" style="stroke:@serie.Color;" />
+
+                    @foreach(ChartPoint point in serie.Values)
+                    {
+                        var selection = GetCoordinates(point);
+                        <circle cx="@selection.X"
+                                cy="@selection.Y"
+                                r="@Parameters.DotRadio"
+                                fill="@serie.Color"
+                                stroke="white"
+                                stroke-width="1"
+                                style="cursor: pointer;"
+                                @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                    }
+                }
+                else if(SelectedSerie is null)
+                {
+                    <polyline points="@GetPoints(serie.Values)" class="line-series" style="stroke:@serie.Color;" />
+
+                    @foreach(ChartPoint point in serie.Values)
+                    {
+                        var selection = GetCoordinates(point);
+                        <circle cx="@selection.X"
+                                cy="@selection.Y"
+                                r="@Parameters.DotRadio"
+                                fill="@serie.Color"
+                                stroke="white"
+                                stroke-width="1"
+                                style="cursor: pointer;"
+                                @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                    }
+                }
+            }
+        </svg>
+    </div>
+
+    @if(SelectedPoint is not null)
+    {
+        <div class="line-data-popup" style="top: @(SelectedPoint.Y)px; left: @(SelectedPoint.X)px" @onclick="() => SelectedPoint=null" @onclick:stopPropagation>
+            @(GetSelectedPointLabelMarkup())
+        </div>
+    }
+    <div class="legend">
+        @foreach(LineSeries serie in ChartData)
+        {
+            <div class="line" @onclick="() => OnSelectLegend(serie)" @onclick:stopPropagation>
+                @GetLeyendLabelMarkup(new LineData(serie.Name, serie.Color, []))
+            </div>
+        }
+    </div>
+</div>

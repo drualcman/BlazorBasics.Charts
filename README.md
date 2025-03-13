@@ -56,7 +56,7 @@ public class PieChartParams
 
 }
 ```
-Then you can do that
+Then you can do
 ``` razor
 <PieChartComponent DataSource=GetPieSegments Parameters=PieParams />
 
@@ -120,7 +120,7 @@ public class ColumnsBarChartParams
     public int MaxColours => ChartColors.Count;
 }
 ```
-Then you can do that
+Then you can do
 ``` razor
 <BarChartComponent Topics=Totals Parameters=BarParams />
 
@@ -177,3 +177,135 @@ All chart automatic set the colours depending in how many items have the data. B
 }
 ```
 This is aplicable for Pie Chart, Column Chart and Bar Chart. Color can be rgb(0,0,0), HEX #000000 or hsl(1,80,40).
+
+## Line Chart
+Example about Line Chart.
+``` razor
+ <LineChart Data=ChartData />
+
+@code {
+    private LineChartData ChartData = new(new List<LineData>
+    {
+        new LineData("Line 1", "green", new List<string> { "10", "50", "15", "100", "20", "30", "25" }),
+        new LineData("Line 2", "blue",  new List<string> { "0",  "5",  "50", "33",  "33", "8",  "12" }),
+        new LineData("Line 3", "red",   new List<string> { "5",  "50", "10", "33",  "8",  "12", "15" })
+    });
+}
+```
+Also you can set some parameters
+``` csharp
+public class LineChartParams
+{
+    public LineChartParams(
+        int width = 600,
+        int height = 300,
+        string backgroundColor = "transparent",
+        string axisStroke = "black",
+        int axisWidth = 2,
+        string gridLineStroke = "#ddd",
+        int gridWidth = 1,
+        string lineSeriesFill = "none",
+        int lineSeriesWidth = 1,
+        int dotRadio = 4,
+        int stepsY = 1,
+        bool showX = true,
+        bool showY = true,
+        Func<string, string> formaterLabelPopup = null,
+        Func<LineData, string> leyendLabel = null
+        )
+
+    public int Width => width;
+    public int Height => height;
+    public string BackgroundColor => backgroundColor;
+    public string AxisStroke => axisStroke;
+    public int AxisWidth => axisWidth;
+    public string GridLineStroke => gridLineStroke;
+    public int GridWidth => gridWidth;
+    public string LineSeriesFill => lineSeriesFill;
+    public int LineSeriesWidth => lineSeriesWidth;
+    public int DotRadio => dotRadio;
+    public int StepsY => stepsY;
+    public bool ShowX => showX;
+    public bool ShowY => showY;
+    public Func<string, string> FormaterLabelPopup => formaterLabelPopup;
+    public Func<LineData, string> LegendLabel => leyendLabel;
+}
+```
+Then you can do
+``` razor
+ <LineChart Data=ChartData Params=LineParams />
+
+@code {
+    LineChartParams LineParams = new LineChartParams();
+
+    private LineChartData ChartData = new(new List<LineData>
+    {
+        new LineData("Line 1", "green", new List<string> { "10", "50", "15", "100", "20", "30", "25" }),
+        new LineData("Line 2", "blue",  new List<string> { "0",  "5",  "50", "33",  "33", "8",  "12" }),
+        new LineData("Line 3", "red",   new List<string> { "5",  "50", "10", "33",  "8",  "12", "15" })
+    });
+
+    protected override void OnInitialized()
+    {
+        LineParams= new(formaterLabelPopup: GetSelectedPointLabelMarkup);
+    }
+
+    private string GetSelectedPointLabelMarkup(string value)
+    {
+        StringBuilder builder = new StringBuilder();
+        builder.Append("<div style='");
+        builder.Append("pointer-events: none;");
+        builder.Append("background-color: blue;");
+        builder.Append("box-shadow: 0 2px 6px rgba(0,0,0,0.2);");
+        builder.Append("padding: 6px 12px;");
+        builder.Append("border-radius: 6px;");
+        builder.Append("text-align: center;");
+        builder.Append("'>");
+        builder.Append($"<strong  style='");
+        builder.Append("color: white;");
+        builder.Append("font-size: medium;");
+        builder.Append("font-weight: bold;");
+        builder.Append($"'>");
+        builder.Append($"{value}");
+        builder.Append($"</strong>");
+        builder.Append("</div>");
+        return builder.ToString();
+    }
+}
+```
+## Ring Percentage
+Example about Line Chart.
+``` razor
+ <RingPercentageComponent Percentage=69 />
+```
+Also you can set some parameters
+``` csharp
+public class RingParams
+{
+    public int Width { get; init; }
+    public int Height { get; init; }
+    public double FontSizeRatio { get; init; }
+    public string LabelColor { get; init; }
+    public string FromColor { get; init; }
+    public string ToColor { get; init; }
+    public string CircunferenceColour { get; init; }
+    public int StrokeWidth { get; init; }
+
+    public RingParams(int width = 0, int height = 0, double fontPerspective = 3.5, string labelColor = "green",
+        string fromColor = "#FFD700", string toColor = "#B22222", string circunferenceColour = "#eee", int strokeWidth = 10)
+    {
+        Width = width;
+        Height = height;
+        FontSizeRatio = fontPerspective;
+        LabelColor = labelColor;
+        FromColor = fromColor;
+        ToColor = toColor;
+        CircunferenceColour = circunferenceColour;
+        StrokeWidth = strokeWidth;
+    }
+}
+```
+Then you can do
+``` razor
+ <RingPercentageComponent Percentage=33 Parameters="new RingParams(width: 100)" />
+```
