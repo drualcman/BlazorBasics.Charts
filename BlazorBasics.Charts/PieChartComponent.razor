@@ -1,9 +1,9 @@
-﻿@if (RenderHandler.HasData)
+﻿@if(RenderHandler.HasData)
 {
     <div class="pie @WrapperCss" style="@Style">
         <div class="pie-container" style="@RenderHandler.GetPieContainerStyle()">
             <svg class="pie-chart" viewBox="@((-Parameters.SeparationOffset).ToString(CultureInfo.InvariantCulture)) @((-Parameters.SeparationOffset).ToString(CultureInfo.InvariantCulture)) @(RenderHandler.TotalWith.ToString(CultureInfo.InvariantCulture)) @(RenderHandler.TotalHeight.ToString(CultureInfo.InvariantCulture))">
-                @for (var i = 0; i < RenderHandler.Segments.Count; i++)
+                @for(var i = 0; i < RenderHandler.Segments.Count; i++)
                 {
                     var segment = RenderHandler.Segments[i];
                     <path d="@RenderHandler.CreateSvgPieSegment(segment)" fill="@segment.Pie.ChartColor"
@@ -14,15 +14,25 @@
                     </path>
                 }
             </svg>
-            <div class="pie-label" style="@LabelStyle">@ShowLabelData()</div>
+            @if (Parameters.ShowLabels)
+            {
+                foreach(var segment in RenderHandler.Segments)
+                {
+                    <div class="pie-label-show" style="@GetPosition(segment)">@ShowLabelData(segment.Pie)</div>
+                }
+            }
+            else
+            {
+                <div class="pie-label" style="@LabelStyle">@ShowLabelData()</div>                
+            }
         </div>
-        @if (ChildContent is null)
+        @if(ChildContent is null)
         {
-            if (!string.IsNullOrEmpty(Parameters.Title))
+            if(!string.IsNullOrEmpty(Parameters.Title))
             {
                 <ul class="legent">
                     <li class="title">@Parameters.Title</li>
-                    @foreach (var item in RenderHandler.Segments)
+                    @foreach(var item in RenderHandler.Segments)
                     {
                         <li class="label"
                             @onmouseenter="e => ShowLabel(item, e)"
@@ -37,7 +47,7 @@
         }
         else
         {
-            @foreach (var item in RenderHandler.Segments)
+            @foreach(var item in RenderHandler.Segments)
             {
                 @ChildContent(item.Pie)
             }

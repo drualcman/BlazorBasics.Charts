@@ -26,16 +26,17 @@ public partial class PieChartComponent : IDisposable
 
     protected override async Task OnParametersSetAsync()
     {
-        if (Attributes is not null && Attributes.TryGetValue("class", out var css)) WrapperCss = css.ToString();
+        if(Attributes is not null && Attributes.TryGetValue("class", out var css))
+            WrapperCss = css.ToString();
         Style = $"--pie-width: {Parameters.Width.ToString(CultureInfo.InvariantCulture)}px; " +
                 $"--pie-height: {Parameters.Height.ToString(CultureInfo.InvariantCulture)}px; ";
-        if (Attributes is not null && Attributes.TryGetValue("style", out var style))
+        if(Attributes is not null && Attributes.TryGetValue("style", out var style))
         {
             Style += style.ToString();
             Attributes.Remove("style");
         }
 
-        if (RenderHandler is null)
+        if(RenderHandler is null)
         {
             RenderHandler = new PieChartRenderHandler(Parameters);
             var data = await DataSource();
@@ -62,7 +63,7 @@ public partial class PieChartComponent : IDisposable
     {
         SegmentHandler.SelectPie(segment);
         Leave();
-        if (OnClick.HasDelegate)
+        if(OnClick.HasDelegate)
             await OnClick.InvokeAsync(segment.Pie);
     }
 
@@ -74,24 +75,53 @@ public partial class PieChartComponent : IDisposable
 
     private MarkupString ShowLabelData()
     {
-        var result = "";
-        if (SegmentHandler.HoverIsSelected)
+        MarkupString result = new();
+        if(SegmentHandler.HoverIsSelected)
         {
-            if (OnHover is not null)
-                result = OnHover.Invoke(SegmentHandler.HoveredChart);
+            if(OnHover is not null)
+                result = new MarkupString(OnHover.Invoke(SegmentHandler.HoveredChart));
             else
-                result = SegmentHandler.HoveredChart.SetTitleTopic is not null ? SegmentHandler.HoveredChart.ShowTitle() :
-                    $"{SegmentHandler.HoveredChart.Name} {SegmentHandler.HoveredChart.Value.ToString("F2", CultureInfo.InvariantCulture)}%";
+                result = ShowLabelData(SegmentHandler.HoveredChart);
         }
+        return result;
+    }
 
-        return new MarkupString(result);
+    private MarkupString ShowLabelData(ChartSegment segment)
+    {
+        var content = "";
+        if(segment is not null)
+        {
+            content = segment.SetTitleTopic is not null ? segment.ShowTitle() :
+                $"{segment.Value.ToString("F2", CultureInfo.InvariantCulture)}%";
+        }
+        return new MarkupString(content);
+    }
+
+    private string GetPosition(PieSegment segment)
+    {
+        string content = string.Empty;
+
+        if(segment is not null)
+        {
+            double middleAngle = RenderHandler.CalculateMiddleAngle(segment);
+            double radiusOffset = (Parameters.Width / 2.0) * Parameters.CenterTextSeparationPercentage;
+
+            double centerX = Parameters.Width / 2.0;
+            double centerY = Parameters.Height / 2.0;
+
+            double labelX = centerX + RenderHandler.GetHorizontal(middleAngle, radiusOffset);
+            double labelY = centerY + RenderHandler.GetVertical(middleAngle, radiusOffset);
+
+            content = $@"left:{((int)Math.Ceiling(labelX)).ToString(CultureInfo.InvariantCulture)}px; top: {((int)Math.Ceiling(labelY)).ToString(CultureInfo.InvariantCulture)}px;";
+        }
+        return content;
     }
 
     private string GetTransformStyle(PieSegment segment)
     {
         var middleAngle = RenderHandler.CalculateMiddleAngle(segment);
         StringBuilder result = new();
-        if (SegmentHandler.ShouldTransform(segment))
+        if(SegmentHandler.ShouldTransform(segment))
             result.Append(
                 $"transform: translate({RenderHandler.GetHorizontal(middleAngle).ToString(CultureInfo.InvariantCulture)}px, {RenderHandler.GetVertial(middleAngle).ToString(CultureInfo.InvariantCulture)}px);");
         return result.ToString();

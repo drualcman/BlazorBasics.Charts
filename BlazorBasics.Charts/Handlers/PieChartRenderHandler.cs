@@ -26,13 +26,14 @@ internal class PieChartRenderHandler
     {
         var segments = new List<PieSegment>();
         var totalPercentage = Math.Round(pieSegments.Sum(p => p.Value), 2);
-        if (totalPercentage > 100.0)
+        if(totalPercentage > 100.0)
             throw new OverflowException(
                 $"{Params.Title} => Percentage sum can't be greater than 100%: {totalPercentage}.");
-        if (pieSegments.Count(s => s.IsSelected) > 1) throw new ArgumentException("Only one pie can be selected.");
+        if(pieSegments.Count(s => s.IsSelected) > 1)
+            throw new ArgumentException("Only one pie can be selected.");
         double lastValue = 0;
         var totalPies = pieSegments.Count;
-        for (var i = 0; i < totalPies; i++)
+        for(var i = 0; i < totalPies; i++)
         {
             var value = lastValue + Math.Round(pieSegments[i].Value, 2);
             int colourIndex = i < Params.MaxColours ? i : 0;
@@ -84,10 +85,21 @@ internal class PieChartRenderHandler
         return Handler.CalculateOffsetX(angle);
     }
 
+    public double GetHorizontal(double angle, double offset)
+    {
+        return offset * Math.Cos(Handler.DegreeToRadian(angle));
+    }
+
     public double GetVertial(double angle)
     {
         return Handler.CalculateOffsetY(angle);
     }
+
+    public double GetVertical(double angle, double offset)
+    {
+        return offset * Math.Sin(Handler.DegreeToRadian(angle));
+    }
+
 
     public double CalculateMiddleAngle(PieSegment segment)
     {
