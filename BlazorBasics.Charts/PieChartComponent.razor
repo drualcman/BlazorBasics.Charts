@@ -37,10 +37,13 @@
         </div>
         @if(ChildContent is null)
         {
-            if(!string.IsNullOrEmpty(Parameters.Title))
+            if(Parameters.ShowLegent)
             {
                 <ul class="legent">
-                    <li class="title">@Parameters.Title</li>
+                    @if (!string.IsNullOrEmpty(Parameters.Title))
+                    {
+                        <li class="title">@Parameters.Title</li>                        
+                    }
                     @foreach(var item in RenderHandler.Segments)
                     {
                         <li class="label"
@@ -56,10 +59,18 @@
         }
         else
         {
-            @foreach(var item in RenderHandler.Segments)
-            {
-                @ChildContent(item.Pie)
-            }
+            <ul class="legent">
+                @foreach(var item in RenderHandler.Segments)
+                {
+                    <li class="label"
+                        @onmouseenter="e => ShowLabel(item, e)"
+                        @onmouseleave="() => Leave()"
+                        @onclick="() => PieClick(item)">
+                        @ChildContent(item.Pie)
+                    </li>
+                    
+                }
+            </ul>
         }
     </div>
 }

@@ -8,7 +8,8 @@ public class PieChartParams
         double delayTime = 0, string title = "",
         IEnumerable<ChartColor> chartColours = null,
         bool showLabels = false, double centerTextSeparationPercentage = 0.85,
-        bool separateBiggerByDefault = true, bool showBiggestLabel = false)
+        bool separateBiggerByDefault = true, bool showBiggestLabel = false,
+        bool showLegent = true)
     {
         Width = width;
         Height = height;
@@ -24,6 +25,7 @@ public class PieChartParams
         CenterTextSeparationPercentage = centerTextSeparationPercentage;
         SeparateBiggerByDefault = separateBiggerByDefault;
         ShowBiggestLabel = showBiggestLabel;
+        ShowLegent = showLegent;
     }
 
     public int Width { get; init; }
@@ -40,5 +42,5 @@ public class PieChartParams
     public double CenterTextSeparationPercentage { get; set; }
     public bool SeparateBiggerByDefault { get; init; }
     public bool ShowBiggestLabel { get; set; }
-
+    public bool ShowLegent { get; set; }
 }

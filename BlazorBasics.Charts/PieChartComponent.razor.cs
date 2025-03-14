@@ -57,15 +57,21 @@ public partial class PieChartComponent : IDisposable
 
     private void Leave()
     {
-        LabelStyle = "display:none;";
-        BiggestStyle = "display:block;";
-        SegmentHandler.SetLeave();
+        if(SegmentHandler.SelectedPie is null)
+        {
+            LabelStyle = "display:none;";
+            BiggestStyle = "display:block;";
+            SegmentHandler.SetLeave();
+        }
     }
 
     private async Task PieClick(PieSegment segment)
     {
         SegmentHandler.SelectPie(segment);
-        Leave();
+        if(SegmentHandler.SelectedPie is not null)
+            ShowLabel(segment);
+        else
+            Leave();
         if(OnClick.HasDelegate)
             await OnClick.InvokeAsync(segment.Pie);
     }
@@ -73,6 +79,11 @@ public partial class PieChartComponent : IDisposable
     private void ShowLabel(PieSegment segment, MouseEventArgs e)
     {
         SegmentHandler.SetHover(segment);
+        ShowLabel(segment);
+    }
+
+    private void ShowLabel(PieSegment segment)
+    {
         LabelStyle = $"display:block; {GetPosition(segment)}";
         BiggestStyle = "display:none;";
     }
