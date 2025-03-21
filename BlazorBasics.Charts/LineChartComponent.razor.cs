@@ -187,8 +187,6 @@ public partial class LineChartComponent
         return labels;
     }
 
-
-
     private string CreateSvgText(string text, int x, int y, string anchor = "middle")
     {
         return $"<text x=\"{x}\" y=\"{y}\" text-anchor=\"{anchor}\" font-size=\"10\">{text}</text>";

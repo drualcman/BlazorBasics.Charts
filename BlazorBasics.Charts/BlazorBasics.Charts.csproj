@@ -16,7 +16,7 @@
 		<PackageTags>captcha;blazor;blazor server; blazor webassembly</PackageTags>
 		<PackageId>BlazorBasics.Charts</PackageId>
 		<Product>BlazorBasics.Charts</Product>
-		<PackageReleaseNotes>Rename LineChart to LineChartComponent to follow same naming.</PackageReleaseNotes>
+		<PackageReleaseNotes>Rename LineChart to LineChartComponent to follow same naming. Fixed small issue in LineChatComponent relative to Y labels and X labels and lines.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
