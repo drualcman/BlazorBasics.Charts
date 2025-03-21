@@ -1,5 +1,5 @@
 ﻿namespace BlazorBasics.Charts;
-public partial class LineChart
+public partial class LineChartComponent
 {
     private const int AxisGap = 10;
     private const double AxisYPaddingRatio = 0.05;
