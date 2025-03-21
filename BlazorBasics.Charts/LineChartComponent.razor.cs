@@ -137,18 +137,21 @@ public partial class LineChartComponent
         List<MarkupString> labels = new List<MarkupString>();
         List<string> customLabels = Data.YLabels?.ToList();
         int chartHeight = Parameters.Height - MarginTop - MarginBottom;
+        int plotTop = MarginTop;
+        int plotBottom = Parameters.Height - MarginBottom;
+        int usableHeight = plotBottom - plotTop;
+
         if(customLabels != null && customLabels.Count > 0)
         {
-            string longestLabel = customLabels.OrderByDescending(label => label.Length).FirstOrDefault();
             int x = MarginLeft - AxisGap;
             int count = customLabels.Count;
+
             for(int i = 0; i < count; i++)
             {
                 string label = customLabels[i];
+                // Repartimos desde 0 (abajo) hasta MaxY (arriba)
                 double percent = (double)i / (count - 1);
-                double valueY = MinY + (MaxY - MinY) * percent;
-                double normalizedY = (valueY - MinY) / (MaxY - MinY);
-                int y = MarginTop + (int)((1 - normalizedY) * PlotHeight) - AxisGap;
+                int y = plotBottom - (int)(percent * usableHeight);
                 string textSvg = CreateSvgText(label, x, y, "end");
                 string gridLine = CreateSvgLine(MarginLeft, y, Parameters.Width - MarginRight + AxisGap, y);
                 labels.Add((MarkupString)(gridLine + textSvg));
@@ -161,24 +164,30 @@ public partial class LineChartComponent
             int stepValue = Math.Max(1, Parameters.StepsY);
             int maxYCeiled = (int)Math.Ceiling(MaxY);
             int requiredSteps = maxYCeiled / stepValue + 1;
+
             if(requiredSteps > maxVisibleSteps)
             {
                 stepValue = Math.Max(1, (int)Math.Ceiling((double)maxYCeiled / maxVisibleSteps));
             }
+
             int adjustedMaxY = (maxYCeiled + stepValue - 1) / stepValue * stepValue;
+
             for(int yValue = 0; yValue <= adjustedMaxY; yValue += stepValue)
             {
-                double normalizedY = (yValue - MinY) / (MaxY - MinY);
-                int y = MarginTop + (int)((1 - normalizedY) * PlotHeight);
-                int x = MarginLeft - 5;
+                double percent = (double)yValue / adjustedMaxY;
+                int y = plotBottom - (int)(percent * usableHeight);
+                int x = MarginLeft - AxisGap;
                 string label = yValue.ToString();
                 string textSvg = CreateSvgText(label, x, y + 4, "end");
                 string gridLine = CreateSvgLine(MarginLeft, y, Parameters.Width - MarginRight + AxisGap, y);
                 labels.Add((MarkupString)(gridLine + textSvg));
             }
         }
+
         return labels;
     }
+
+
 
     private string CreateSvgText(string text, int x, int y, string anchor = "middle")
     {
