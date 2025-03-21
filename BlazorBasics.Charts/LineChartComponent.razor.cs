@@ -125,8 +125,8 @@ public partial class LineChartComponent
                 position = "end";
             }
 
-            string textSvg = CreateSvgText(label, x + AxisGap, Parameters.Height - MarginBottom + AxisGap, position);
-            string gridLine = CreateSvgLine(x + AxisGap, MarginTop - AxisGap, x + AxisGap, Parameters.Height - MarginBottom);
+            string textSvg = CreateSvgText(label, x + AxisGap, Parameters.Height - MarginBottom + (int)(AxisGap * 2.5), position);
+            string gridLine = CreateSvgLine(x + AxisGap, MarginTop - (int)(AxisGap * 1.5), x + AxisGap, Parameters.Height - MarginBottom + AxisGap);
             labels.Add((MarkupString)(gridLine + textSvg));
         }
         return labels;

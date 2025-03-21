@@ -6,15 +6,15 @@
     --grid-line-width: @Parameters.GridWidth;
     --line-series-fill: @Parameters.LineSeriesFill;
     --line-series-width: @Parameters.LineSeriesWidth;
-    width: @(Parameters.Width)px;
-    height: @(Parameters.Height)px;" @onclick=CancelSelections>
+    width: 100%;
+    height: 100%;" @onclick=CancelSelections>
     <div class="chart">
         <svg width="100%" height="100%" viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" preserveAspectRatio="none" class="line-chart">
             <!-- Y Axis -->
-            <line x1="@MarginLeft" y1="@MarginTop + AxisGap" x2="@MarginLeft" y2="@(Parameters.Height - MarginBottom)" class="axis" />
+            <line x1="@MarginLeft" y1="@(MarginTop - (AxisGap*1.5))" x2="@MarginLeft" y2="@(Parameters.Height - MarginBottom + AxisGap)" class="axis" />
 
             <!-- X Axis -->
-            <line x1="@MarginLeft" y1="@(Parameters.Height - MarginBottom)" x2="@(Parameters.Width - MarginRight + AxisGap)" y2="@(Parameters.Height - MarginBottom)" class="axis" />
+            <line x1="@MarginLeft" y1="@(Parameters.Height - MarginBottom + AxisGap)" x2="@(Parameters.Width - MarginRight + AxisGap)" y2="@(Parameters.Height - MarginBottom + AxisGap)" class="axis" />
 
             <!-- Y Labels and grid lines -->
             @if(Parameters.ShowY)
@@ -34,7 +34,7 @@
                 }
             }
 
-            <!-- Dots adn lines -->
+            <!-- Dots and lines -->
             @foreach(LineSeries serie in ChartData)
             {
                 if(SelectedSerie is not null && SelectedSerie.Equals(serie))
