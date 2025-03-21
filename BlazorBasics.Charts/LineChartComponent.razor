@@ -72,15 +72,19 @@
                     }
                 }
             }
+            @if(SelectedPoint is not null)
+            {
+                <foreignObject x="0" y="0" width="100%" height="100%">
+                    <div class="line-data-popup-wrapper">
+                        <div class="line-data-popup" style="top: @(SelectedPoint.Y + MarginTop)px; left: @(SelectedPoint.X + MarginLeft)px" @onclick="() => SelectedPoint=null" @onclick:stopPropagation>
+                            @(GetSelectedPointLabelMarkup())
+                        </div>
+                    </div>
+                </foreignObject>
+            }
+
         </svg>
     </div>
-
-    @if(SelectedPoint is not null)
-    {
-        <div class="line-data-popup" style="top: @(SelectedPoint.Y)px; left: @(SelectedPoint.X)px" @onclick="() => SelectedPoint=null" @onclick:stopPropagation>
-            @(GetSelectedPointLabelMarkup())
-        </div>
-    }
 
     @if(Parameters.ShowLegend)
     {

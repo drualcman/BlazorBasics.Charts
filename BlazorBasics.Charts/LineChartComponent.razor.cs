@@ -43,10 +43,11 @@ public partial class LineChartComponent
             for(int j = 0; j < maxValuesCount; j++)
             {
                 double x = j + 1;
-                double y = j < originalCount ? double.TryParse(valueList[j], out double value) ? value : 0 : 0;
+                double yFallback = j + 1;
+                double y = j < originalCount ? double.TryParse(valueList[j], out double value) ? value : yFallback : yFallback;
 
                 allYValues.Add(y);
-                points.Add(new ChartPoint(x, y, valueList[j].ToString()));
+                points.Add(new ChartPoint(x, y, valueList[j]));
             }
             ChartData.Add(new LineSeries(input.Name, string.IsNullOrEmpty(input.Color) ? "" : input.Color, points));
         }
@@ -65,9 +66,11 @@ public partial class LineChartComponent
         double yRange = MaxY - MinY;
         if(yRange == 0)
         {
-            yRange = 1;
-            MaxY += 0.5;
-            MinY -= 0.5;
+            yRange = Math.Abs(MaxY) * 0.1;
+            if(yRange == 0)
+                yRange = 1;
+            MaxY += yRange / 2;
+            MinY -= yRange / 2;
         }
         else
         {
@@ -78,6 +81,10 @@ public partial class LineChartComponent
         double xPadding = (MaxX - MinX) * AxisXPaddingRatio;
         MaxX += xPadding;
         MinX -= xPadding;
+
+        MinY = Math.Floor(MinY);
+        MaxY = Math.Ceiling(MaxY);
+
     }
 
     string GetPoints(IEnumerable<ChartPoint> points)
@@ -172,9 +179,9 @@ public partial class LineChartComponent
 
             int adjustedMaxY = (maxYCeiled + stepValue - 1) / stepValue * stepValue;
 
-            for(int yValue = 0; yValue <= adjustedMaxY; yValue += stepValue)
+            for(int yValue = (int)MinY; yValue <= (int)MaxY; yValue += stepValue)
             {
-                double percent = (double)yValue / adjustedMaxY;
+                double percent = (yValue - MinY) / (MaxY - MinY);
                 int y = plotBottom - (int)(percent * usableHeight);
                 int x = MarginLeft - AxisGap;
                 string label = yValue.ToString();
@@ -209,12 +216,6 @@ public partial class LineChartComponent
         {
             SelectedPoint = selection;
         }
-    }
-
-    ChartPoint GetCoordinates(ChartPoint point)
-    {
-        (int x, int y) cooredinates = SetCoordinated(point.X, point.Y);
-        return new(cooredinates.x, cooredinates.y, point.Value);
     }
 
     MarkupString GetSelectedPointLabelMarkup()
@@ -253,6 +254,7 @@ public partial class LineChartComponent
 
     void OnSelectLegend(LineSeries serie)
     {
+        SelectedPoint = null;
         if(serie.Equals(SelectedSerie))
             SelectedSerie = null;
         else
@@ -263,6 +265,12 @@ public partial class LineChartComponent
     {
         SelectedPoint = null;
         SelectedSerie = null;
+    }
+
+    ChartPoint GetCoordinates(ChartPoint point)
+    {
+        (int x, int y) cooredinates = SetCoordinated(point.X, point.Y);
+        return new(cooredinates.x, cooredinates.y, point.Value);
     }
 
     private (int X, int Y) SetCoordinated(double xValue, double yValue)
