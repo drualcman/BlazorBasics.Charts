@@ -125,15 +125,10 @@ public partial class LineChartComponent
                     x = (int)Math.Ceiling(selection.X) - AxisGap;
                 }
             }
-
             string position = "middle";
-            if(i == labelCount - 1)
-            {
-                position = "end";
-            }
-
-            string textSvg = CreateSvgText(label, x + AxisGap, Parameters.Height - MarginBottom + (int)(AxisGap * 2.5), position);
-            string gridLine = CreateSvgLine(x + AxisGap, MarginTop - (int)(AxisGap * 1.5), x + AxisGap, Parameters.Height - MarginBottom + AxisGap);
+            int xLabel = x + AxisGap;
+            string textSvg = CreateSvgText(label, xLabel, Parameters.Height - MarginBottom + (int)(AxisGap * 2.5), position);
+            string gridLine = CreateSvgLine(xLabel, MarginTop - (int)(AxisGap * 1.5), xLabel, Parameters.Height - MarginBottom + AxisGap);
             labels.Add((MarkupString)(gridLine + textSvg));
         }
         return labels;
