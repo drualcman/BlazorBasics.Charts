@@ -10,12 +10,14 @@ public class LineChartParams(
     int gridWidth = 1,
     string lineSeriesFill = "none",
     int lineSeriesWidth = 1,
-    int dotRadio = 4,
+    int dotRadius = 4,
     int stepsY = 1,
     bool showX = true,
     bool showY = true,
     bool showLegend = true,
-    Func<string, string> formaterLabelPopup = null,
+    bool rotatedXLabels = false,
+    double rotationAngleXLabel = 45,
+    Func<string, string> formatterLabelPopup = null,
     Func<LineData, string> legendLabel = null
     )
 {
@@ -28,11 +30,24 @@ public class LineChartParams(
     public int GridWidth => gridWidth;
     public string LineSeriesFill => lineSeriesFill;
     public int LineSeriesWidth => lineSeriesWidth;
-    public int DotRadio => dotRadio;
+    public int DotRadius => dotRadius;
     public int StepsY => stepsY;
     public bool ShowX => showX;
     public bool ShowY => showY;
     public bool ShowLegend => showLegend;
-    public Func<string, string> FormaterLabelPopup => formaterLabelPopup;
+    public bool RotatedXLabels => rotatedXLabels;
+    public double RotationAngleXLabel
+    {
+        get
+        {
+            if(rotationAngleXLabel < 0)
+                throw new ArgumentException($"Must be positive", nameof(RotationAngleXLabel));
+            if(rotationAngleXLabel > 90)
+                throw new ArgumentException($"Must be less than 90", nameof(RotationAngleXLabel));
+            return rotationAngleXLabel;
+        }
+    }
+    public Func<string, string> FormatterLabelPopup => formatterLabelPopup;
     public Func<LineData, string> LegendLabel => legendLabel;
+
 }

@@ -5,9 +5,7 @@
     --grid-line-stroke: @Parameters.GridLineStroke;
     --grid-line-width: @Parameters.GridWidth;
     --line-series-fill: @Parameters.LineSeriesFill;
-    --line-series-width: @Parameters.LineSeriesWidth;
-    width: 100%;
-    height: 100%;" @onclick=CancelSelections>
+    --line-series-width: @Parameters.LineSeriesWidth;" @onclick=CancelSelections>
     <div class="chart">
         <svg width="100%" height="100%" viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" preserveAspectRatio="none" class="line-chart">
             <!-- Y Axis -->
@@ -46,7 +44,7 @@
                         var selection = GetCoordinates(point);
                         <circle cx="@selection.X"
                                 cy="@selection.Y"
-                                r="@Parameters.DotRadio"
+                                r="@Parameters.DotRadius"
                                 fill="@serie.Color"
                                 stroke="white"
                                 stroke-width="1"
@@ -63,7 +61,7 @@
                         var selection = GetCoordinates(point);
                         <circle cx="@selection.X"
                                 cy="@selection.Y"
-                                r="@Parameters.DotRadio"
+                                r="@Parameters.DotRadius"
                                 fill="@serie.Color"
                                 stroke="white"
                                 stroke-width="1"

@@ -10,12 +10,15 @@ public partial class LineChartComponent
     [Parameter] public LineChartData Data { get; set; }
     [Parameter] public LineChartParams Parameters { get; set; } = new();
 
-    int ViewBoxWidth => Parameters.Width;
-    int ViewBoxHeight => Parameters.Height;
+    int Width = 0;
+    int ViewBoxWidth => Width;
+    int Height = 0;
+    int ViewBoxHeight => Height;
     int MarginLeft => MaxYLabelWidth + AxisGap;
-    int MarginBottom => 20 + AxisGap;
+    int MarginBottom => ExtraBottomForRotatedLabels;
     double PlotWidth => ViewBoxWidth - MarginLeft - MarginRight;
     double PlotHeight => ViewBoxHeight - MarginTop - MarginBottom;
+    int ExtraBottomForRotatedLabels = 0;
 
     List<LineSeries> ChartData;
     int MaxYLabelWidth = 0;
@@ -25,9 +28,12 @@ public partial class LineChartComponent
     double MaxY;
     LineSeries SelectedSerie;
     ChartPoint SelectedPoint;
+    bool NeedsRotation;
 
     protected override void OnParametersSet()
     {
+        Width = Parameters.Width;
+        Height = Parameters.Height;
         ChartData = new List<LineSeries>();
         List<double> allYValues = new List<double>();
         int maxValuesCount = Data.Data.Max(d => d.Values.Count());
@@ -44,10 +50,11 @@ public partial class LineChartComponent
             {
                 double x = j + 1;
                 double yFallback = j + 1;
-                double y = j < originalCount ? double.TryParse(valueList[j], out double value) ? value : yFallback : yFallback;
+                double y = j < originalCount ? double.TryParse(valueList[j], out double value) ? value : yFallback : 0;
 
                 allYValues.Add(y);
-                points.Add(new ChartPoint(x, y, valueList[j]));
+                string label = j < originalCount ? valueList[j] : "0";
+                points.Add(new ChartPoint(x, y, label));
             }
             ChartData.Add(new LineSeries(input.Name, string.IsNullOrEmpty(input.Color) ? "" : input.Color, points));
         }
@@ -85,6 +92,34 @@ public partial class LineChartComponent
         MinY = Math.Floor(MinY);
         MaxY = Math.Ceiling(MaxY);
 
+        if(Data.XLabels is not null && Data.XLabels.Any())
+        {
+            string longestLabel = Data.XLabels.OrderByDescending(label => label.Length).First();
+            int estimatedWidth = longestLabel.Length * 7;
+            int totalLabels = Data.XLabels.Count();
+            double spacing = totalLabels > 1 ? PlotWidth / (totalLabels - 1) : PlotWidth;
+            NeedsRotation = Parameters.RotatedXLabels || estimatedWidth > spacing;
+
+            if(NeedsRotation)
+            {
+                double angleRad = ChartMathHelpers.CalculateRadious(Parameters.RotationAngleXLabel);
+                int fontSize = 12;
+                double rotatedHeight = estimatedWidth * Math.Sin(angleRad) + fontSize * Math.Cos(angleRad);
+                ExtraBottomForRotatedLabels = (int)Math.Ceiling(rotatedHeight) + AxisGap * 2;
+            }
+            else
+            {
+                ExtraBottomForRotatedLabels = AxisGap * 3;
+            }
+        }
+        else
+        {
+            ExtraBottomForRotatedLabels = AxisGap * 3;
+        }
+
+        double percentUnderZero = Math.Abs(MinY) / (MaxY - MinY);
+        int extraPixels = (int)(percentUnderZero * PlotHeight);
+        ExtraBottomForRotatedLabels += extraPixels;
     }
 
     string GetPoints(IEnumerable<ChartPoint> points)
@@ -107,10 +142,15 @@ public partial class LineChartComponent
         List<string> customLabels = Data.XLabels?.ToList();
         bool hasCustomLabels = customLabels != null && customLabels.Any();
         int labelCount = hasCustomLabels ? customLabels.Count : (int)Math.Ceiling(MaxX);
+
+        // Estimate spacing between each label
+        double spacing = labelCount > 1 ? (double)PlotWidth / (labelCount - 1) : PlotWidth;
+
         for(int i = 0; i < labelCount; i++)
         {
             double percent = labelCount == 1 ? 0 : (double)i / (labelCount - 1);
-            int x = MarginLeft + (int)(percent * PlotWidth); // <-- Sin MarginBottom            
+            int x = MarginLeft + (int)(percent * PlotWidth);
+
             string label = (i + 1).ToString();
             if(hasCustomLabels)
                 label = customLabels[i];
@@ -118,21 +158,64 @@ public partial class LineChartComponent
             var data = Data.Data.First();
             if(data.Values.Count() == labelCount)
             {
-                var point = ChartData.FirstOrDefault(p => p.Name == data.Name && p.Color == (string.IsNullOrEmpty(data.Color) ? "black" : data.Color))?.Values.ToList() ?? null;
-                if(point is not null)
+                List<ChartPoint> point = ChartData
+                    .FirstOrDefault(p => p.Name == data.Name && p.Color == (string.IsNullOrEmpty(data.Color) ? "black" : data.Color))
+                    ?.Values.ToList();
+
+                if(point is not null && (i < point.Count))
                 {
-                    var selection = GetCoordinates(point[i]);
+                    ChartPoint selection = GetCoordinates(point[i]);
                     x = (int)Math.Ceiling(selection.X) - AxisGap;
                 }
             }
-            string position = "middle";
+
             int xLabel = x + AxisGap;
-            string textSvg = CreateSvgText(label, xLabel, Parameters.Height - MarginBottom + (int)(AxisGap * 2.5), position);
+
+            // Estimate label width (average of 7px per character)    
+            int fontSize = 12;
+            int estimatedWidth = label.Length * 7;
+
+            int yBase = Parameters.Height - MarginBottom;
+            int yLabel;
+
+            if(NeedsRotation)
+            {
+                double angleRad = ChartMathHelpers.CalculateRadious(Parameters.RotationAngleXLabel);
+                double rotatedHeight = estimatedWidth * Math.Sin(angleRad) + fontSize * Math.Cos(angleRad);
+                yLabel = yBase + AxisGap + (int)Math.Ceiling(rotatedHeight);
+            }
+            else
+            {
+                yLabel = yBase + (int)(AxisGap * 2.5);
+            }
+
+            string textSvg = NeedsRotation
+                ? CreateRotatedSvgText(label, xLabel, yLabel, Parameters.RotationAngleXLabel, estimatedWidth)
+                : CreateSvgText(label, xLabel, yLabel, "middle");
+
             string gridLine = CreateSvgLine(xLabel, MarginTop - (int)(AxisGap * 1.5), xLabel, Parameters.Height - MarginBottom + AxisGap);
+
             labels.Add((MarkupString)(gridLine + textSvg));
         }
         return labels;
     }
+
+
+    private string CreateRotatedSvgText(string text, int x, int y, double angleDegrees, int estimatedWidth)
+    {
+        double angleRadians = ChartMathHelpers.CalculateRadious(angleDegrees);
+
+        // Horizontal offset depends on the width and the cosine of the angle
+        double offsetX = estimatedWidth * 0.5 * Math.Cos(angleRadians);
+
+        // If angle is negative, we shift to the left instead of right
+        int xCorrected = x + (int)Math.Round(offsetX);
+
+        return $"<text x=\"{xCorrected}\" y=\"{y}\" text-anchor=\"end\" transform=\"rotate({angleDegrees},{xCorrected},{y})\" font-size=\"12\">{text}</text>";
+    }
+
+
+
 
     IEnumerable<MarkupString> GetYLabels()
     {
@@ -218,7 +301,7 @@ public partial class LineChartComponent
         StringBuilder builder = new StringBuilder();
         if(SelectedPoint is not null)
         {
-            if(Parameters.FormaterLabelPopup is null)
+            if(Parameters.FormatterLabelPopup is null)
             {
                 builder.Append($"<strong style='");
                 builder.Append("font-size: medium;");
@@ -229,7 +312,7 @@ public partial class LineChartComponent
                 builder.Append($"</strong>");
             }
             else
-                builder.Append(Parameters.FormaterLabelPopup(SelectedPoint.Value));
+                builder.Append(Parameters.FormatterLabelPopup(SelectedPoint.Value));
         }
         return new MarkupString(builder.ToString());
     }
