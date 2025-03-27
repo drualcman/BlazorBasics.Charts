@@ -36,7 +36,10 @@ public partial class LineChartComponent
         Height = Parameters.Height;
         ChartData = new List<LineSeries>();
         List<double> allYValues = new List<double>();
-        int maxValuesCount = Data.Data.Max(d => d.Values.Count());
+        int maxValuesCount = Data.Data
+        .Select(d => d.Values.Count())
+        .DefaultIfEmpty(0)
+        .Max();
         MinX = 1;
         MaxX = maxValuesCount;
         IEnumerator<LineData> lines = Data.Data.GetEnumerator();
