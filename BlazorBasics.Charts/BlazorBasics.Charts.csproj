@@ -4,7 +4,7 @@
 		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.1.8</Version>
+		<Version>1.1.9</Version>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Authors>Sergi Ortiz Gomez</Authors>
@@ -16,7 +16,7 @@
 		<PackageTags>captcha;blazor;blazor server; blazor webassembly</PackageTags>
 		<PackageId>BlazorBasics.Charts</PackageId>
 		<Product>BlazorBasics.Charts</Product>
-		<PackageReleaseNotes>Fixed issue with dot position in the Y coordinate.</PackageReleaseNotes>
+		<PackageReleaseNotes>Fixed issue with dot position in the Y coordinate. Fixed how to manage labels in X when not enough space.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
