@@ -3,7 +3,7 @@
 public class ColumnsBarChartParams
 {
     public ColumnsBarChartParams(string backgroundColour = "#D3D3D3", int thickness = 20, int dimension = 100,
-        bool showValues = true,
+        bool showValues = false,
         IEnumerable<ChartColor> chartColours = null)
     {
         BackgroundColour = backgroundColour;

@@ -49,17 +49,7 @@ public partial class ColumnWithLineChartComponent
 
     private double GetPercentageHeight(ChartDoubleSegment segment, bool isPrimary)
     {
-        double total = MaxTotal - segment.GetTotal();
-        double percentage = 0;
-        if(isPrimary)
-        {
-            percentage = segment.PrimaryValue;
-        }
-        else
-        {
-            percentage = total - segment.PrimaryValue;
-
-        }
-        return (percentage / total * 100) / MaxTotal * 100;
+        double value = isPrimary ? segment.PrimaryValue : segment.SecondaryValue;
+        return value / MaxTotal * 100;
     }
 }

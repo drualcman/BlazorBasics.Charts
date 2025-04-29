@@ -4,7 +4,7 @@
         <div class="columnchart-container" title="@topic.ShowTitle()">
             @if(Parameters.ShowValues)
             {
-                <div class="columnchart-labels">
+                <div class="columnchart-labels columnchart-labels-top">
                     <span class="columnchart-quantity">@topic.PrimaryValue / @topic.SecondaryValue</span>
                 </div>
             }
@@ -13,12 +13,12 @@
                 <div class="columnchart-foreground primary-bar" style="background-color: @GetColour(topic, true); height: @GetPercentageHeight(topic, true).ToString(CultureInfo.InvariantCulture)%;"></div>
                 <!-- Secondary value bar stacked on top -->
                 <div class="columnchart-foreground secondary-bar" style="background-color: @GetColour(topic, false); height: @GetPercentageHeight(topic, false).ToString(CultureInfo.InvariantCulture)%; bottom: @GetPercentageHeight(topic, true).ToString(CultureInfo.InvariantCulture)%;"></div>
+                <!-- Percentage point -->
+                <div class="percentage-point" style="bottom: @GetPercentageHeight(topic.GetTotal(), MaxTotal).ToString(CultureInfo.InvariantCulture)%;">
+                    <span class="percentage-label">@topic.GetPercentage(MaxTotal)%</span>
+                </div>
             </div>
-            <!-- Percentage point and line -->
-            <div class="percentage-point" style="bottom: @GetPercentageHeight(topic.GetTotal(), MaxTotal).ToString(CultureInfo.InvariantCulture)%;">
-                <span class="percentage-label">@topic.GetPercentage(MaxTotal)%</span>
-            </div>
-            <div class="columnchart-labels">
+            <div class="columnchart-labels columnchart-labels-bottom">
                 <span class="columnchart-name">@topic.Name</span>
             </div>
         </div>
@@ -35,7 +35,10 @@
                 var x2 = (i + 1.5) * (100.0 / Topics.Count());
                 var y1 = 100 - GetPercentageHeight(topic1.GetTotal(), MaxTotal);
                 var y2 = 100 - GetPercentageHeight(topic2.GetTotal(), MaxTotal);
-                <line x1="@x1%" y1="@y1%" x2="@x2%" y2="@y2%" stroke="blue" stroke-width="2" />
+                // Adjust y coordinates to account for the top label height (fixed at 30px)
+                var adjustedY1 = y1 - 30; // 30px label height relative to chart height 
+                var adjustedY2 = y2 - 30;
+                <line x1="@x1%" y1="@adjustedY1%" x2="@x2%" y2="@adjustedY2%" stroke="blue" stroke-width="2" />
             }
         }
     </svg>

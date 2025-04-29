@@ -2,6 +2,7 @@
     display: flex;
     justify-content: space-evenly;
     height: 100%;
+    position: relative;
 }
 
 .columnchart-container {
@@ -21,7 +22,6 @@
 }
 
 .columnchart-foreground {
-    height: var(--Dimension);
     width: 100%;
     position: absolute;
     bottom: 0;
@@ -33,7 +33,7 @@
 }
 
 .secondary-bar {
-    z-index: 2;    
+    z-index: 2;
 }
 
 .percentage-point {
@@ -59,11 +59,19 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    height: 30px;
+    overflow: hidden;
+}
+
+.columnchart-labels-top {
     margin-bottom: 5px;
 }
 
+.columnchart-labels-bottom {
+    margin-top: 5px;
+}
+
 .columnchart-quantity {
-    margin-bottom: 5px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -71,5 +79,8 @@
 }
 
 .columnchart-name {
-    margin-top: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
 }
