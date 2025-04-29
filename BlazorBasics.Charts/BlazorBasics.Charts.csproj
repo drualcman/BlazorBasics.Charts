@@ -21,6 +21,7 @@
 
 	<ItemGroup>
 		<EmbeddedResource Include="BarChartComponent.razor.css" />
+		<EmbeddedResource Include="ColumnWithLineChartComponent.razor.css" />
 		<EmbeddedResource Include="ColumnChartComponent.razor.css" />
 		<EmbeddedResource Include="LineChartComponent.razor.css" />
 		<EmbeddedResource Include="PieChartComponent.razor.css" />

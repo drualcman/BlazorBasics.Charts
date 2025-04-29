@@ -1,0 +1,42 @@
+﻿<div class="column-chart @WrapperCss" style="@Style">
+    @foreach(var topic in Topics)
+    {
+        <div class="columnchart-container" title="@topic.ShowTitle()">
+            @if(Parameters.ShowValues)
+            {
+                <div class="columnchart-labels">
+                    <span class="columnchart-quantity">@topic.PrimaryValue / @topic.SecondaryValue</span>
+                </div>
+            }
+            <div class="columnchart-background">
+                <!-- Primary value bar -->
+                <div class="columnchart-foreground primary-bar" style="background-color: @GetColour(topic, true); height: @GetPercentageHeight(topic, true).ToString(CultureInfo.InvariantCulture)%;"></div>
+                <!-- Secondary value bar stacked on top -->
+                <div class="columnchart-foreground secondary-bar" style="background-color: @GetColour(topic, false); height: @GetPercentageHeight(topic, false).ToString(CultureInfo.InvariantCulture)%; bottom: @GetPercentageHeight(topic, true).ToString(CultureInfo.InvariantCulture)%;"></div>
+            </div>
+            <!-- Percentage point and line -->
+            <div class="percentage-point" style="bottom: @GetPercentageHeight(topic.GetTotal(), MaxTotal).ToString(CultureInfo.InvariantCulture)%;">
+                <span class="percentage-label">@topic.GetPercentage(MaxTotal)%</span>
+            </div>
+            <div class="columnchart-labels">
+                <span class="columnchart-name">@topic.Name</span>
+            </div>
+        </div>
+    }
+    <!-- Percentage line connecting the points -->
+    <svg class="percentage-line" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+        @if(Topics.Count() > 1)
+        {
+            for(int i = 0; i < Topics.Count() - 1; i++)
+            {
+                var topic1 = Topics.ElementAt(i);
+                var topic2 = Topics.ElementAt(i + 1);
+                var x1 = (i + 0.5) * (100.0 / Topics.Count());
+                var x2 = (i + 1.5) * (100.0 / Topics.Count());
+                var y1 = 100 - GetPercentageHeight(topic1.GetTotal(), MaxTotal);
+                var y2 = 100 - GetPercentageHeight(topic2.GetTotal(), MaxTotal);
+                <line x1="@x1%" y1="@y1%" x2="@x2%" y2="@y2%" stroke="blue" stroke-width="2" />
+            }
+        }
+    </svg>
+</div>
