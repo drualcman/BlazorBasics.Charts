@@ -6,9 +6,14 @@ public partial class LineChartComponent
     private const double AxisXPaddingRatio = 0.05;
     private const int MarginRight = 20;
     private const int MarginTop = 20;
+    private string Style;
+    private string WrapperCss = "";
 
     [Parameter] public LineChartData Data { get; set; }
     [Parameter] public LineChartParams Parameters { get; set; } = new();
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object> Attributes { get; set; }
 
     int Width = 0;
     int ViewBoxWidth => Width;
@@ -32,6 +37,20 @@ public partial class LineChartComponent
 
     protected override void OnParametersSet()
     {
+        if(Attributes is not null && Attributes.TryGetValue("class", out var css))
+            WrapperCss = css.ToString();
+        Style = $"--background-color: {Parameters.BackgroundColor}; " +
+                $"--axis-stroke: {Parameters.AxisStroke}; " +
+                $"--axis-width: {Parameters.AxisWidth}; " +
+                $"--grid-line-stroke: {Parameters.GridLineStroke}; " +
+                $"--grid-line-width: {Parameters.GridWidth}; " +
+                $"--line-series-fill: {Parameters.LineSeriesFill}; " +
+                $"--line-series-width: {Parameters.LineSeriesWidth}; ";
+        if(Attributes is not null && Attributes.TryGetValue("style", out var style))
+        {
+            Style += style.ToString();
+            Attributes.Remove("style");
+        }
         Width = Parameters.Width;
         Height = Parameters.Height;
         ChartData = new List<LineSeries>();

@@ -1,11 +1,4 @@
-﻿<div class="chart-multiline" style="
-    --background-color: @Parameters.BackgroundColor;
-    --axis-stroke: @Parameters.AxisStroke;
-    --axis-width: @Parameters.AxisWidth;
-    --grid-line-stroke: @Parameters.GridLineStroke;
-    --grid-line-width: @Parameters.GridWidth;
-    --line-series-fill: @Parameters.LineSeriesFill;
-    --line-series-width: @Parameters.LineSeriesWidth;" @onclick=CancelSelections>
+﻿<div class="chart-multiline @WrapperCss" style="@Style" @onclick=CancelSelections>
     <div class="chart">
         <svg width="100%" height="100%" viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" preserveAspectRatio="none" class="line-chart">
             <!-- Y Axis -->
