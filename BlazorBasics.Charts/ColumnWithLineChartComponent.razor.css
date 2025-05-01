@@ -1,8 +1,9 @@
 ﻿.bar-chart-container {
     font-family: Arial, sans-serif;
-    max-width: 800px;
     margin: 0 auto;
     padding: 20px;
+    width: 100%;
+    height: 100%;
 }
 
 .chart-title {
@@ -33,11 +34,11 @@
     border-radius: 3px;
 }
 
-.active-users {
+.primary-values {
     background-color: #4e79a7;
 }
 
-.non-active-users {
+.secondary-values {
     background-color: #f28e2b;
 }
 
@@ -51,8 +52,12 @@
     background-color: #e15759;
 }
 
-.active-percentage {
+.primary-percentage {
     background-color: #59a84b;
+}
+
+.secondary-percentage {
+    background-color: #ed49ff;
 }
 
 .chart-area {
@@ -60,6 +65,6 @@
 }
 
 .chart-svg {
-    width: 100%;
-    height: 400px;
+    width: var(--chart-width);
+    height: var(--chart-height);
 }

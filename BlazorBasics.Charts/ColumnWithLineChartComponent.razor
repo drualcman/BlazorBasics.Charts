@@ -1,85 +1,75 @@
-﻿// BarChartWithPercentage.razor
-@using System.Linq
-
-<div class="bar-chart-container">
+﻿<div class="bar-chart-container" style="
+        --chart-height: @(ChartHeight)px;
+        --chart-width: @(ChartWidth)px">
     <div class="chart-title">MobileAP Subs vs. Monthly Active Users</div>
 
     <div class="chart-legend">
         <div class="legend-item">
-            <span class="legend-color active-users"></span>
-            <span>Active Users</span>
+            <span class="legend-color primary-values"></span>
+            <span>Primary Users</span>
         </div>
         <div class="legend-item">
-            <span class="legend-color non-active-users"></span>
-            <span>Non-Active Users</span>
+            <span class="legend-color secondary-values"></span>
+            <span>Secondary Users</span>
         </div>
         <div class="legend-item">
             <span class="legend-line grand-total"></span>
             <span>% of Grand Total</span>
         </div>
         <div class="legend-item">
-            <span class="legend-line active-percentage"></span>
-            <span>% Total Users</span>
+            <span class="legend-line primary-percentage"></span>
+            <span>% Primary Value</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-line secondary-percentage"></span>
+            <span>% Secondary Value</span>
         </div>
     </div>
 
     <div class="chart-area">
-        <svg class="chart-svg" xmlns="http://www.w3.org/2000/svg">
+        <svg class="chart-svg" width="100%" height="100%" viewBox="0 0 @ChartWidth @ChartWidth">
             <!-- Eje X -->
-            <line x1="@margin" y1="@(chartHeight + margin)" x2="@(TotalWidth)" y2="@(chartHeight + margin)" stroke="#ccc" stroke-width="1" />
+            <line x1="@(margin - spacing)" y1="@(chartHeight + margin + 5)" x2="@(ChartWidth)" y2="@(chartHeight + margin + 5)" stroke="#ccc" stroke-width="1" />
 
             @for(var i = 0; i < Data.Count; i++)
             {
-                var item = Data[i];
-                var columnTotal = item.ActiveUsers + item.NonActiveUsers;
-                var activePercentage = columnTotal > 0 ? (item.ActiveUsers * 100.0 / columnTotal) : 0;
-                var columnHeight = columnTotal * chartHeight / MaxColumnTotal;
-                var grandTotalPercentage = columnTotal * 100.0 / GrandTotal;
-
-                // Posiciones
-                var x = margin + (i * (barWidth + spacing));
-                var yBase = margin + chartHeight;
-
-                // Barra de usuarios activos
-                var activeHeight = columnHeight * activePercentage / 100;
-                <rect x="@x" y="@(yBase - columnHeight)"
-                      width="@barWidth"
-                      height="@activeHeight"
-                      fill="#4e79a7" />
+                <rect x="@ColumnsPrimary[i].X"
+                      y="@ColumnsPrimary[i].Y"
+                      width="@ColumnsPrimary[i].Width"
+                      height="@ColumnsPrimary[i].Height"
+                      fill="@ColumnsPrimary[i].Color" />
 
                 // Barra de usuarios inactivos
-                <rect x="@x"
-                      y="@(yBase - columnHeight + activeHeight)"
-                      width="@barWidth"
-                      height="@(columnHeight - activeHeight)"
-                      fill="#f28e2b" />
 
-                // Punto del porcentaje del total general
-                var pointX = x + (barWidth / 2);
-                var grandTotalPointY = yBase - (chartHeight * grandTotalPercentage / 100);
-                GrandTotalPoints.Add(new(pointX, grandTotalPointY));
-
-                // Punto del porcentaje activo
-                var activePercentagePointY = yBase - columnHeight + (columnHeight * (100 - activePercentage) / 100);
-                ActivePercentagePoints.Add(new(pointX, activePercentagePointY));
+                <rect x="@ColumnsSecondary[i].X"
+                      y="@ColumnsSecondary[i].Y"
+                      width="@ColumnsSecondary[i].Width"
+                      height="@ColumnsSecondary[i].Height"
+                      fill="@ColumnsSecondary[i].Color" />
 
                 // Círculos para los puntos
-                <circle cx="@pointX" cy="@grandTotalPointY" r="5" fill="#e15759" />
-                <circle cx="@pointX" cy="@activePercentagePointY" r="5" fill="#59a84b" />
+                <circle cx="@PrimaryPoints[i].X" cy="@PrimaryPoints[i].Y" r="5" fill="@PrimaryPoints[i].Color" />
+                <circle cx="@SecondaryPoints[i].X" cy="@SecondaryPoints[i].Y" r="5" fill="@SecondaryPoints[i].Color" />
 
                 // Etiquetas usando el helper
-                @(new MarkupString(SvgHelper.CreateSvgText($"{(int)grandTotalPercentage}%", pointX, (int)(grandTotalPointY - 15), "middle")))
-                @(new MarkupString(SvgHelper.CreateSvgText($"{(int)activePercentage}%", pointX, (int)(activePercentagePointY - 15), "middle")))
-                @(new MarkupString(SvgHelper.CreateSvgText(item.Month, (x + (barWidth / 2)), (int)(chartHeight + margin + 20), "middle")))
+                @(new MarkupString(SvgHelper.CreateSvgText(BigTotalPercentageLabels[i].Label, BigTotalPercentageLabels[i].X, BigTotalPercentageLabels[i].Y, "middle")))
+                @(new MarkupString(SvgHelper.CreateSvgText(PrimaryPercentageLabels[i].Label, PrimaryPercentageLabels[i].X, PrimaryPercentageLabels[i].Y, "middle")))
+                @(new MarkupString(SvgHelper.CreateSvgText(SecondaryPercentageLabels[i].Label, SecondaryPercentageLabels[i].X, SecondaryPercentageLabels[i].Y, "middle")))
+                @(new MarkupString(SvgHelper.CreateSvgText(BottomLabels[i].Label, BottomLabels[i].X, BottomLabels[i].Y, "middle")))
             }
 
             <!-- Línea del porcentaje del total general -->
             <polyline points="@string.Join(" ", GrandTotalPoints.Select(p => $"{p.X},{p.Y}"))"
                       fill="none" stroke="#e15759" stroke-width="2" />
 
-            <!-- Línea del porcentaje activo -->
-            <polyline points="@string.Join(" ", ActivePercentagePoints.Select(p => $"{p.X},{p.Y}"))"
+            <!-- Línea del porcentaje primario -->
+            <polyline points="@string.Join(" ", PrimaryPercentagePoints.Select(p => $"{p.X},{p.Y}"))"
                       fill="none" stroke="#59a84b" stroke-width="2" />
+
+            <!-- Línea del porcentaje secundario -->
+            <polyline points="@string.Join(" ", SecondaryPercentagePoints.Select(p => $"{p.X},{p.Y}"))"
+                      fill="none" stroke="#ed49ff" stroke-width="2" />
         </svg>
+
     </div>
 </div>
