@@ -15,7 +15,7 @@
         </div>
         <div class="legend-item">
             <span class="legend-line"></span>
-            <span>% Active</span>
+            <span>% of Grand Total</span>
         </div>
     </div>
     
@@ -28,8 +28,9 @@
                 const int barWidth = 50;
                 const int spacing = 30;
                 
-                // Calcular valores máximos
-                var maxTotal = Data.Max(x => x.ActiveUsers + x.NonActiveUsers);
+                // Calcular valores
+                var maxColumnTotal = Data.Max(x => x.ActiveUsers + x.NonActiveUsers);
+                var grandTotal = Data.Sum(x => x.ActiveUsers + x.NonActiveUsers);
                 var points = new List<(double X, double Y)>();
                 var totalWidth = (Data.Count * (barWidth + spacing)) + margin;
             }
@@ -40,52 +41,49 @@
             @for (var i = 0; i < Data.Count; i++)
             {
                 var item = Data[i];
-                var total = item.ActiveUsers + item.NonActiveUsers;
-                var activePercentage = total > 0 ? (item.ActiveUsers * 100.0 / total) : 0;
-                
-                // Altura de la columna (proporcional al máximo)
-                var columnHeight = total * chartHeight / maxTotal;
+                var columnTotal = item.ActiveUsers + item.NonActiveUsers;
+                var activePercentage = columnTotal > 0 ? (item.ActiveUsers * 100.0 / columnTotal) : 0;
+                var columnHeight = columnTotal * chartHeight / maxColumnTotal;
+                var grandTotalPercentage = columnTotal * 100.0 / grandTotal;
                 
                 // Posiciones
                 var x = margin + (i * (barWidth + spacing));
                 var yBase = margin + chartHeight;
-                var yTop = yBase - columnHeight;
                 
                 // Barra de usuarios activos
                 var activeHeight = columnHeight * activePercentage / 100;
-                <rect x="@x" y="@(yBase - activeHeight)" 
+                <rect x="@x" y="@(yBase - columnHeight)" 
                       width="@barWidth" 
                       height="@activeHeight" 
                       fill="#4e79a7" />
                 
                 // Barra de usuarios inactivos
                 <rect x="@x" 
-                      y="@yTop" 
+                      y="@(yBase - columnHeight + activeHeight)" 
                       width="@barWidth" 
                       height="@(columnHeight - activeHeight)" 
                       fill="#f28e2b" />
                 
-                // Punto de porcentaje activo (en el borde entre las dos barras)
+                // Punto del porcentaje del total general (para la línea)
                 var pointX = x + (barWidth / 2);
-                var pointY = yBase - activeHeight;
+                var pointY = yBase - (chartHeight * grandTotalPercentage / 100);
                 points.Add((pointX, pointY));
                 
                 <circle cx="@pointX" cy="@pointY" r="5" fill="#e15759" />
                 
-                // Etiqueta del porcentaje activo
-                @(new MarkupString(SvgHelper.CreateSvgText($"{(int)activePercentage}%", pointX, (int)(pointY - 10), "middle")))
+                // Etiqueta del porcentaje activo (dentro de la barra)
+                @(new MarkupString(SvgHelper.CreateSvgText($"{(int)activePercentage}%", pointX, (int)(yBase - columnHeight + activeHeight / 2), "middle")))
+                
+                // Etiqueta del porcentaje del total (junto al punto)
+                @(new MarkupString(SvgHelper.CreateSvgText($"{(int)grandTotalPercentage}%", pointX, (int)(pointY - 10), "middle")))
                 
                 // Etiqueta del mes
                 @(new MarkupString(SvgHelper.CreateSvgText(item.Month, (x + (barWidth / 2)), (int)(chartHeight + margin + 20), "middle")))
-
-                
-                // Etiqueta del total (opcional)
-                @(new MarkupString(SvgHelper.CreateSvgText($"{(total / 1000).ToString("N0")}%", (x + (barWidth / 2)), (int)(chartHeight + margin + 35), "middle")))
             }
             
-            <!-- Línea que conecta los puntos del porcentaje activo -->
+            <!-- Línea que conecta los puntos del porcentaje del total -->
             <polyline points="@string.Join(" ", points.Select(p => $"{p.X},{p.Y}"))" 
-                     fill="none" stroke="#e15759" stroke-width="2" />
+                     fill="none" stroke="#e15759" stroke-width="2"/>
         </svg>
     </div>
 </div>
