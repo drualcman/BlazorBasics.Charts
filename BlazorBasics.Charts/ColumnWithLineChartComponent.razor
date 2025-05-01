@@ -27,9 +27,9 @@
     </div>
 
     <div class="chart-area">
-        <svg class="chart-svg" width="100%" height="100%" viewBox="0 0 @ChartWidth @ChartWidth">
+        <svg class="chart-svg" viewBox="@ViewBox" preserveAspectRatio="xMidYMid meet">
             <!-- Eje X -->
-            <line x1="@(margin - spacing)" y1="@(chartHeight + margin + 5)" x2="@(ChartWidth)" y2="@(chartHeight + margin + 5)" stroke="#ccc" stroke-width="1" />
+            <line x1="@(margin - spacing)" y1="@(ChartHeight + margin + 5)" x2="@(ChartWidth)" y2="@(ChartHeight + margin + 5)" stroke="#ccc" stroke-width="1" />
 
             @for(var i = 0; i < Data.Count; i++)
             {

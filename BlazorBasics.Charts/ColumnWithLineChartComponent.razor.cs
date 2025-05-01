@@ -6,7 +6,7 @@ public partial class ColumnWithLineChartComponent
 
     // Constantes para el layout
     const int margin = 15;
-    const int chartHeight = 450;
+    int ChartHeight => (int)(barWidth * 6);
     const int barWidth = 75;
     const int spacing = 15;
 
@@ -25,8 +25,12 @@ public partial class ColumnWithLineChartComponent
     List<ChartLabels> BigTotalPercentageLabels = new List<ChartLabels>();
     List<ChartLabels> PrimaryPercentageLabels = new List<ChartLabels>();
     List<ChartLabels> SecondaryPercentageLabels = new List<ChartLabels>();
-    int ChartHeight => Math.Max((int)(ColumnsPrimary.Max(c => c.Y) + ColumnsSecondary.Max(c => c.Y)), chartHeight);
+    //int ChartHeight => Math.Max((int)(ColumnsPrimary.Max(c => c.Y) + ColumnsSecondary.Max(c => c.Y)), chartHeight);
     int ChartWidth => (Data.Count * (barWidth + spacing) + margin);
+
+    private string ViewBox => $"0 0 {CalculatedWidth} {CalculatedHeight}";
+    private int CalculatedWidth => (Data.Count * (barWidth + spacing)) + margin;
+    private int CalculatedHeight => ChartHeight + (margin * 3);
 
     protected override void OnParametersSet()
     {
@@ -36,12 +40,12 @@ public partial class ColumnWithLineChartComponent
             var columnTotal = item.Value;
             var primaryPercentage = columnTotal > 0 ? (item.PrimaryValue * 100.0 / columnTotal) : 0;
             var secondaryPercentage = columnTotal > 0 ? (item.SecondaryValue * 100.0 / columnTotal) : 0;
-            var columnHeight = columnTotal * chartHeight / MaxColumnTotal;
+            var columnHeight = columnTotal * ChartHeight / MaxColumnTotal;
             var grandTotalPercentage = columnTotal * 100.0 / GrandTotal;
 
             // Posiciones
             var x = margin + (i * (barWidth + spacing));
-            var yBase = margin + chartHeight;
+            var yBase = margin + ChartHeight;
 
             // Barra primaria
             var primaryHeight = (int)(columnHeight * primaryPercentage / 100);
@@ -52,7 +56,7 @@ public partial class ColumnWithLineChartComponent
 
             // Punto del porcentaje del total general
             var pointX = x + (barWidth / 2);
-            var grandTotalPointY = yBase - (chartHeight * grandTotalPercentage / 100);
+            var grandTotalPointY = yBase - (ChartHeight * grandTotalPercentage / 100);
             GrandTotalPoints.Add(new(pointX, grandTotalPointY));
 
             // Punto del primario
@@ -70,7 +74,7 @@ public partial class ColumnWithLineChartComponent
             BigTotalPercentageLabels.Add(new($"{(int)grandTotalPercentage}%", pointX, (int)(grandTotalPointY)));
             PrimaryPercentageLabels.Add(new($"{(int)primaryPercentage}%", pointX, (int)(primaryPercentagePointY)));
             SecondaryPercentageLabels.Add(new($"{(int)secondaryPercentage}%", pointX, (int)(secondaryPercentagePointY)));
-            BottomLabels.Add(new(item.Label, (int)(x + (barWidth / 2)), (int)(chartHeight + margin + 20)));
+            BottomLabels.Add(new(item.Label, (int)(x + (barWidth / 2)), (int)(ChartHeight + margin + 20)));
         }
     }
 }

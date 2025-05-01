@@ -1,6 +1,6 @@
 ﻿<div class="chart-multiline @WrapperCss" style="@Style" @onclick=CancelSelections>
     <div class="chart">
-        <svg width="100%" height="100%" viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" preserveAspectRatio="none" class="line-chart">
+        <svg width="100%" height="100%" viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" preserveAspectRatio="xMidYMid meet" class="line-chart">
             <!-- Y Axis -->
             <line x1="@MarginLeft" y1="@(MarginTop - (AxisGap*1.5))" x2="@MarginLeft" y2="@(Parameters.Height - MarginBottom + AxisGap)" class="axis" />
 
