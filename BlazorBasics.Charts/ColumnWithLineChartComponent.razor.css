@@ -1,8 +1,9 @@
 ﻿.column-chart {
-    display: flex;
-    justify-content: space-evenly;
+    display: inline-flex; /* Ajusta el ancho al contenido */
+    justify-content: space-between; /* Distribuye el espacio entre columnas */
     height: 100%;
     position: relative;
+    align-items: flex-end; /* Alinea las columnas en la parte inferior */
 }
 
 .columnchart-container {
@@ -10,14 +11,16 @@
     flex-direction: column;
     align-items: center;
     height: 100%;
-    width: var(--Thickness);
+    width: var(--Thickness); /* Ancho fijo de la columna, por defecto 20px */
+    margin: 0 10px; /* Margen de 10px a cada lado */
+    box-sizing: border-box;
 }
 
 .columnchart-background {
     background-color: var(--BackgroundColour);
     flex-grow: 1;
     width: 100%;
-    height: var(--Dimension);
+    height: var(--Dimension); /* Altura fija, por defecto 100px */
     position: relative;
 }
 
@@ -53,22 +56,27 @@
 
 .percentage-line {
     z-index: 3;
+    pointer-events: none; /* Evita interacciones con la línea */
+    width: 100%; /* Cubre el ancho del contenido */
+    height: 100%;
 }
 
 .columnchart-labels {
     display: flex;
     flex-direction: column;
     align-items: center;
-    height: 30px;
+    width: 100%; /* Usa el ancho de la columna */
     overflow: hidden;
 }
 
 .columnchart-labels-top {
+    height: 30px; /* Mantiene altura fija para etiquetas superiores */
     margin-bottom: 5px;
 }
 
 .columnchart-labels-bottom {
     margin-top: 5px;
+    min-height: 30px; /* Altura mínima, pero puede crecer */
 }
 
 .columnchart-quantity {
@@ -76,11 +84,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
     text-align: center;
+    width: 100%;
 }
 
 .columnchart-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal; /* Permite que el texto se divida en varias líneas */
     text-align: center;
+    width: 100%;
+    font-size: 12px; /* Tamaño de fuente más pequeño para mejor ajuste */
+    line-height: 1.2; /* Espaciado entre líneas */
 }

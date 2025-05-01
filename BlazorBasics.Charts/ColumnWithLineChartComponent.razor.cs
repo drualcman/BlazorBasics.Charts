@@ -2,7 +2,8 @@ namespace BlazorBasics.Charts;
 
 public partial class ColumnWithLineChartComponent
 {
-    private double MaxTotal;
+    private double TotalValue;
+    private double MaxValue;
     private string Style;
     private string WrapperCss = "";
     [Parameter] public IEnumerable<ChartDoubleSegment> Topics { get; set; }
@@ -13,11 +14,15 @@ public partial class ColumnWithLineChartComponent
 
     protected override void OnParametersSet()
     {
-        MaxTotal = Topics.Any() ? Topics.Sum(t => t.GetTotal()) : 0;
-        if(MaxTotal == 0)
-            MaxTotal = 0.0000000001;
+        TotalValue = Topics.Any() ? Topics.Sum(t => t.Value) : 0;
+        if(TotalValue == 0)
+            TotalValue = 0.0000000001;
+        MaxValue = Topics.Any() ? Topics.Max(t => t.Value) : 0;
+        if(MaxValue == 0)
+            MaxValue = 0.0000000001;
         if(Attributes is not null && Attributes.TryGetValue("class", out var css))
             WrapperCss = css.ToString();
+
         Style = $"--Thickness: {Parameters.Thickness.ToString(CultureInfo.InvariantCulture)}px; " +
                 $"--Dimension: {Parameters.Dimension.ToString(CultureInfo.InvariantCulture)}px; " +
                 $"--BackgroundColour: {Parameters.BackgroundColour}; ";
@@ -44,12 +49,15 @@ public partial class ColumnWithLineChartComponent
 
     private double GetPercentageHeight(double value, double total)
     {
-        return total == 0 ? 0 : (value / MaxTotal * 100);
+        return total == 0 ? 0 : (value / TotalValue * 100);
     }
 
     private double GetPercentageHeight(ChartDoubleSegment segment, bool isPrimary)
     {
-        double value = isPrimary ? segment.PrimaryValue : segment.SecondaryValue;
-        return value / MaxTotal * 100;
+        double value = isPrimary ? segment.PrimaryPercentage : segment.SecondaryPercentage;
+        double container = segment.Value / TotalValue * 100;
+        double portion = value / segment.Value * 100;
+        double result = container * portion / 100;
+        return result;
     }
 }
