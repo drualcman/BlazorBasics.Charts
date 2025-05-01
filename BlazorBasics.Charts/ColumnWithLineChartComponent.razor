@@ -1,4 +1,4 @@
-﻿<div class="bar-chart-container @WrapperCss" style="@Style">
+﻿<div class="bar-chart-container @WrapperCss" style="@Style" @onclick=HideLabels @onclick:stopPropagation>
     @if(Parameters.ShowTitle)
     {
         <div class="chart-title">@Data.Title</div>
@@ -7,37 +7,48 @@
     @if(Parameters.ShowLegend)
     {
         <div class="chart-legend">
-            <div class="legend-item" @onclick=ShowPrimaryValues>
+            <div class="legend-item" @onclick=ShowPrimaryValues @onclick:stopPropagation>
                 <span class="legend-color primary-values"></span>
                 <span>@Data.PrimaryLegend</span>
             </div>
-            <div class="legend-item" @onclick=ShowSecondValues>
+            <div class="legend-item" @onclick=ShowSecondValues @onclick:stopPropagation>
                 <span class="legend-color secondary-values"></span>
                 <span>@Data.SecondaryLegend</span>
             </div>
-            <div class="legend-item">
-                <span class="legend-line grand-total"></span>
-                <span>% of Grand Total</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-line primary-percentage"></span>
-                <span>% @Data.PrimaryLegend</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-line primary-percentage"></span>
-                <span>% @Data.SecondaryLegend</span>
-            </div>
+            @if(Parameters.ShowGranTotal)
+            {
+                <div class="legend-item">
+                    <span class="legend-line grand-total"></span>
+                    <span>% of Grand Total</span>
+                </div>
+            }
+            @if(Parameters.ShowPrimaryValues)
+            {
+                <div class="legend-item">
+                    <span class="legend-line primary-percentage"></span>
+                    <span>% @Data.PrimaryLegend</span>
+                </div>
+            }
+            @if(Parameters.ShowSecondaryValues)
+            {
+                <div class="legend-item">
+                    <span class="legend-line primary-percentage"></span>
+                    <span>% @Data.SecondaryLegend</span>
+                </div>
+            }
         </div>
     }
 
     <div class="chart-area">
         <svg class="chart-svg" viewBox="@ViewBox" preserveAspectRatio="xMidYMid meet">
             <!-- Eje X -->
-            <line x1="@(Parameters.Margin - Parameters.Spacing)"
-                  y1="@(ChartHeight + Parameters.Margin + 5)"
-                  x2="@(CalculatedWidth)"
-                  y2="@(ChartHeight + Parameters.Margin + 5)"
-                  stroke="#ccc" stroke-width="1" />
+            @(
+                new MarkupString(SvgHelper.CreateSvgLine(
+                Margin - Parameters.Spacing,
+                ChartHeight + Margin + 5,
+                CalculatedWidth,
+                ChartHeight + Margin + 5))
+                )
             @{
                 int rows = Data.Data.Count();
             }
@@ -51,67 +62,71 @@
                       width="@ColumnsPrimary[i].Width"
                       height="@ColumnsPrimary[i].Height"
                       fill="@ColumnsPrimary[i].Color"
-                      @onclick="() => OnColumnClick(item)" />
+                      @onclick="() => OnColumnClick(item)" @onclick:stopPropagation />
 
                 <rect x="@ColumnsSecondary[i].X"
                       y="@ColumnsSecondary[i].Y"
                       width="@ColumnsSecondary[i].Width"
                       height="@ColumnsSecondary[i].Height"
                       fill="@ColumnsSecondary[i].Color"
-                      @onclick="() => OnColumnClick(item)" />
-
-                <circle cx="@BigTotalPoints[i].X"
-                        cy="@BigTotalPoints[i].Y"
-                        r="5"
-                        fill="@BigTotalPoints[i].Color" />
-
-                <circle cx="@PrimaryPoints[i].X"
-                        cy="@PrimaryPoints[i].Y"
-                        r="5"
-                        fill="@PrimaryPoints[i].Color"
-                        @onclick="() => OnPointClick(item, PrimaryPoints[i])" />
-
-                <circle cx="@SecondaryPoints[i].X"
-                        cy="@SecondaryPoints[i].Y"
-                        r="5"
-                        fill="@SecondaryPoints[i].Color"
-                        @onclick="() => OnPointClick(item, SecondaryPoints[i])" />
+                      @onclick="() => OnColumnClick(item)" @onclick:stopPropagation />
 
 
-                @(
-                    new MarkupString(SvgHelper.CreateSvgText(
-                    Parameters.BigTotalValueLabelFormatter?.Invoke(item) ?? BigTotalPercentageLabels[i].Label,
-                    BigTotalPercentageLabels[i].X,
-                    BigTotalPercentageLabels[i].Y,
-                    "middle"))
-                    )
-
-
-
-                if(IsShowingPrimaryValues || PrimaryPoints[i] == SelectedPoint)
+                if(Parameters.ShowGranTotal)
                 {
+                    <circle cx="@BigTotalPoints[i].X"
+                            cy="@BigTotalPoints[i].Y"
+                            r="5"
+                            fill="@BigTotalPoints[i].Color"
+                            @onclick="() => OnColumnClick(item)" @onclick:stopPropagation />
                     @(
                         new MarkupString(SvgHelper.CreateSvgText(
-                        Parameters.PrimaryValueLabelFormatter?.Invoke(item) ?? PrimaryPercentageLabels[i].Label,
-                        PrimaryPercentageLabels[i].X,
-                        PrimaryPercentageLabels[i].Y,
+                        Parameters.BigTotalValueLabelFormatter?.Invoke(item) ?? BigTotalPercentageLabels[i].Label,
+                        BigTotalPercentageLabels[i].X,
+                        BigTotalPercentageLabels[i].Y,
                         "middle"))
                         )
                 }
 
 
-                if(IsShowingSecondValues || SecondaryPoints[i] == SelectedPoint)
+                if(Parameters.ShowPrimaryValues)
                 {
-                    @(
-                        new MarkupString(SvgHelper.CreateSvgText(
-                        Parameters.SecondaryValueLabelFormatter?.Invoke(item) ?? SecondaryPercentageLabels[i].Label,
-                        SecondaryPercentageLabels[i].X,
-                        SecondaryPercentageLabels[i].Y,
-                        "middle"))
-                        )
+                    <circle cx="@PrimaryPoints[i].X"
+                            cy="@PrimaryPoints[i].Y"
+                            r="5"
+                            fill="@PrimaryPoints[i].Color"
+                            @onclick="() => OnPointClick(item, PrimaryPoints[i])" @onclick:stopPropagation />
+                    if(IsShowingPrimaryValues || PrimaryPoints[i] == SelectedPoint)
+                    {
+                        @(
+                            new MarkupString(SvgHelper.CreateSvgText(
+                            Parameters.PrimaryValueLabelFormatter?.Invoke(item) ?? PrimaryPercentageLabels[i].Label,
+                            PrimaryPercentageLabels[i].X,
+                            PrimaryPercentageLabels[i].Y,
+                            "middle"))
+                            )
+                    }
                 }
 
 
+                if(Parameters.ShowSecondaryValues)
+                {
+                    <circle cx="@SecondaryPoints[i].X"
+                            cy="@SecondaryPoints[i].Y"
+                            r="5"
+                            fill="@SecondaryPoints[i].Color"
+                            @onclick="() => OnPointClick(item, SecondaryPoints[i])" @onclick:stopPropagation />
+                    if(IsShowingSecondValues || SecondaryPoints[i] == SelectedPoint)
+                    {
+                        @(
+                            new MarkupString(SvgHelper.CreateSvgText(
+                            Parameters.SecondaryValueLabelFormatter?.Invoke(item) ?? SecondaryPercentageLabels[i].Label,
+                            SecondaryPercentageLabels[i].X,
+                            SecondaryPercentageLabels[i].Y,
+                            "middle"))
+                            )
+                    }
+                }
 
                 @(new MarkupString(SvgHelper.CreateSvgText(
                     Parameters.BottomLabelFormatter?.Invoke(item) ?? item.Label,
@@ -119,15 +134,21 @@
                     BottomLabels[i].Y,
                     "middle")))
             }
-
-            <polyline points="@string.Join(" ", GrandTotalPoints.Select(p => $"{p.X},{p.Y}"))"
-                      fill="none" stroke="@Parameters.GrandTotalLineColor" stroke-width="2" />
-
-            <polyline points="@string.Join(" ", PrimaryPercentagePoints.Select(p => $"{p.X},{p.Y}"))"
-                      fill="none" stroke="@Parameters.PrimaryPercentageLineColor" stroke-width="2" />
-
-            <polyline points="@string.Join(" ", SecondaryPercentagePoints.Select(p => $"{p.X},{p.Y}"))"
-                      fill="none" stroke="@Parameters.SecondaryPercentageLineColor" stroke-width="2" />
+            @if(Parameters.ShowGranTotal)
+            {
+                <polyline points="@string.Join(" ", GrandTotalPoints.Select(p => $"{p.X},{p.Y}"))"
+                          fill="none" stroke="@Parameters.GrandTotalLineColor" stroke-width="2" />
+            }
+            @if(Parameters.ShowPrimaryValues)
+            {
+                <polyline points="@string.Join(" ", PrimaryPercentagePoints.Select(p => $"{p.X},{p.Y}"))"
+                          fill="none" stroke="@Parameters.PrimaryPercentageLineColor" stroke-width="2" />
+            }
+            @if(Parameters.ShowSecondaryValues)
+            {
+                <polyline points="@string.Join(" ", SecondaryPercentagePoints.Select(p => $"{p.X},{p.Y}"))"
+                          fill="none" stroke="@Parameters.SecondaryPercentageLineColor" stroke-width="2" />
+            }
         </svg>
     </div>
 

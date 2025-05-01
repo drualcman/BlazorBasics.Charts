@@ -4,9 +4,9 @@ public class ColumnWithLineChartParams
     public int Width { get; set; } = 800;
     public int Height { get; set; } = 500;
     public string BackgroundColor { get; set; } = "transparent";
-    public int BarWidth { get; set; } = 75;
+    public int BarWidth { get; set; } = 15;
+    public int MinBarHeight { get; set; } = 150;
     public int Spacing { get; set; } = 15;
-    public int Margin { get; set; } = 15;
     public string PrimaryColor { get; set; } = "#4e79a7";
     public string SecondaryColor { get; set; } = "#f28e2b";
     public string GrandTotalLineColor { get; set; } = "#e15759";
@@ -14,6 +14,9 @@ public class ColumnWithLineChartParams
     public string SecondaryPercentageLineColor { get; set; } = "#ed49ff";
     public bool ShowTitle { get; set; } = true;
     public bool ShowLegend { get; set; } = true;
+    public bool ShowGranTotal { get; set; } = true;
+    public bool ShowPrimaryValues { get; set; } = true;
+    public bool ShowSecondaryValues { get; set; } = false;
     public Func<ColumnDataItem, string> BigTotalValueLabelFormatter { get; set; }
     public Func<ColumnDataItem, string> PrimaryValueLabelFormatter { get; set; }
     public Func<ColumnDataItem, string> SecondaryValueLabelFormatter { get; set; }

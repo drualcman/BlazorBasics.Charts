@@ -10,6 +10,7 @@ public partial class ColumnWithLineChartComponent
 
     [Parameter] public EventCallback<ColumnDataItem> OnItemClick { get; set; }
 
+    const int Margin = 15;
     private string Style;
     private string WrapperCss = "";
     private ColumnDataItem SelectedItem;
@@ -17,9 +18,16 @@ public partial class ColumnWithLineChartComponent
     bool IsShowingPrimaryValues;
     bool IsShowingSecondValues;
 
-    private int ChartHeight => (int)(Parameters.BarWidth * 6);
-    private int CalculatedWidth => (Data.Data.Count() * (Parameters.BarWidth + Parameters.Spacing)) + Parameters.Margin;
-    private int CalculatedHeight => ChartHeight + (Parameters.Margin * 3);
+    private int ChartHeight
+    {
+        get
+        {
+            var contentHeight = Parameters.Height / 2;
+            return Math.Max(Parameters.MinBarHeight, contentHeight);
+        }
+    }
+    private int CalculatedWidth => (Data.Data.Count() * (Parameters.BarWidth + Parameters.Spacing)) + Margin;
+    private int CalculatedHeight => ChartHeight + (Margin * 3);
     private string ViewBox => $"0 0 {CalculatedWidth} {CalculatedHeight}";
 
     // Listas internas para el renderizado
@@ -47,7 +55,8 @@ public partial class ColumnWithLineChartComponent
         if(Attributes?.TryGetValue("class", out var css) == true)
             WrapperCss = css.ToString();
 
-        Style = $"--primary-color: {Parameters.PrimaryColor}; " +
+        Style = $"--char-height: {Parameters.Height}px; " +
+                $"--primary-color: {Parameters.PrimaryColor}; " +
                 $"--secondary-color: {Parameters.SecondaryColor}; " +
                 $"--grand-total-color: {Parameters.GrandTotalLineColor}; " +
                 $"--primary-percentage-color: {Parameters.PrimaryPercentageLineColor};" +
@@ -81,8 +90,8 @@ public partial class ColumnWithLineChartComponent
         var columnHeight = (double)(item.Value * ChartHeight / maxColumnTotal);
         var grandTotalPercentage = (double)(item.Value * 100.0m / grandTotal);
 
-        var x = Parameters.Margin + (index * (Parameters.BarWidth + Parameters.Spacing));
-        var yBase = Parameters.Margin + ChartHeight;
+        var x = Margin + (index * (Parameters.BarWidth + Parameters.Spacing));
+        var yBase = Margin + ChartHeight;
 
         // Barras
         var primaryHeight = (double)((decimal)columnHeight * primaryPercentage / 100.0m);
@@ -106,9 +115,9 @@ public partial class ColumnWithLineChartComponent
         SecondaryPoints.Add(new(pointX, secondaryPercentagePointY, 0, 0, Parameters.SecondaryPercentageLineColor));
 
         BigTotalPercentageLabels.Add(new($"{(int)grandTotalPercentage}%", pointX, (int)(grandTotalPointY) - 10));
-        PrimaryPercentageLabels.Add(new($"{(int)primaryPercentage}%", pointX, (int)(primaryPercentagePointY)));
-        SecondaryPercentageLabels.Add(new($"{(int)secondaryPercentage}%", pointX, (int)(secondaryPercentagePointY)));
-        BottomLabels.Add(new(item.Label, (int)(x + (Parameters.BarWidth / 2)), (int)(ChartHeight + Parameters.Margin + 20)));
+        PrimaryPercentageLabels.Add(new($"{(int)primaryPercentage}%", pointX, (int)(primaryPercentagePointY) - 10));
+        SecondaryPercentageLabels.Add(new($"{(int)secondaryPercentage}%", pointX, (int)(secondaryPercentagePointY) - 10));
+        BottomLabels.Add(new(item.Label, (int)(x + (Parameters.BarWidth / 2)), (int)(ChartHeight + Margin + 20)));
     }
 
     private void ClearCollections()
@@ -127,8 +136,7 @@ public partial class ColumnWithLineChartComponent
 
     private async Task OnColumnClick(ColumnDataItem item)
     {
-        IsShowingPrimaryValues = false;
-        IsShowingSecondValues = false;
+        HideLabels();
         SelectedPoint = null;
         SelectedItem = item;
         await OnItemClick.InvokeAsync(item);
@@ -136,8 +144,7 @@ public partial class ColumnWithLineChartComponent
 
     private async Task OnPointClick(ColumnDataItem item, ColumnBar point)
     {
-        IsShowingPrimaryValues = false;
-        IsShowingSecondValues = false;
+        HideLabels();
         SelectedPoint = point;
         SelectedItem = item;
         await OnItemClick.InvokeAsync(SelectedItem);
@@ -145,17 +152,23 @@ public partial class ColumnWithLineChartComponent
 
     void ShowPrimaryValues()
     {
-        SelectedPoint = null;
-        SelectedItem = null;
+        HideLabels();
         IsShowingPrimaryValues = true;
         IsShowingSecondValues = false;
     }
     void ShowSecondValues()
     {
+        HideLabels();
+        IsShowingPrimaryValues = false;
+        IsShowingSecondValues = true;
+    }
+
+    void HideLabels()
+    {
         SelectedPoint = null;
         SelectedItem = null;
         IsShowingPrimaryValues = false;
-        IsShowingSecondValues = true;
+        IsShowingSecondValues = false;
     }
 }
 
