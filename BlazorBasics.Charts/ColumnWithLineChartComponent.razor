@@ -7,11 +7,11 @@
     @if(Parameters.ShowLegend)
     {
         <div class="chart-legend">
-            <div class="legend-item">
+            <div class="legend-item" @onclick=ShowPrimaryValues>
                 <span class="legend-color primary-values"></span>
                 <span>@Data.PrimaryLegend</span>
             </div>
-            <div class="legend-item">
+            <div class="legend-item" @onclick=ShowSecondValues>
                 <span class="legend-color secondary-values"></span>
                 <span>@Data.SecondaryLegend</span>
             </div>
@@ -22,7 +22,7 @@
             <div class="legend-item">
                 <span class="legend-line primary-percentage"></span>
                 <span>% @Data.PrimaryLegend</span>
-            </div> 
+            </div>
             <div class="legend-item">
                 <span class="legend-line primary-percentage"></span>
                 <span>% @Data.SecondaryLegend</span>
@@ -42,8 +42,9 @@
                 int rows = Data.Data.Count();
             }
 
-            @for(var i = 0; i < rows; i++)
+            @for(var r = 0; r < rows; r++)
             {
+                int i = r;
                 var item = Data.Data.ElementAt(i);
                 <rect x="@ColumnsPrimary[i].X"
                       y="@ColumnsPrimary[i].Y"
@@ -62,38 +63,55 @@
                 <circle cx="@BigTotalPoints[i].X"
                         cy="@BigTotalPoints[i].Y"
                         r="5"
-                        fill="@BigTotalPoints[i].Color"
-                        @onclick="() => OnPointClick(item)" /> 
-                        
+                        fill="@BigTotalPoints[i].Color" />
+
                 <circle cx="@PrimaryPoints[i].X"
                         cy="@PrimaryPoints[i].Y"
                         r="5"
                         fill="@PrimaryPoints[i].Color"
-                        @onclick="() => OnPointClick(item)" />
+                        @onclick="() => OnPointClick(item, PrimaryPoints[i])" />
 
                 <circle cx="@SecondaryPoints[i].X"
                         cy="@SecondaryPoints[i].Y"
                         r="5"
                         fill="@SecondaryPoints[i].Color"
-                        @onclick="() => OnPointClick(item)" />
+                        @onclick="() => OnPointClick(item, SecondaryPoints[i])" />
 
-                @(new MarkupString(SvgHelper.CreateSvgText(
+
+                @(
+                    new MarkupString(SvgHelper.CreateSvgText(
                     Parameters.BigTotalValueLabelFormatter?.Invoke(item) ?? BigTotalPercentageLabels[i].Label,
-                    BigTotalPercentageLabels[i].X, 
-                    BigTotalPercentageLabels[i].Y, 
-                    "middle")))
+                    BigTotalPercentageLabels[i].X,
+                    BigTotalPercentageLabels[i].Y,
+                    "middle"))
+                    )
 
-                @(new MarkupString(SvgHelper.CreateSvgText(
-                    Parameters.PrimaryValueLabelFormatter?.Invoke(item) ?? PrimaryPercentageLabels[i].Label,
-                    PrimaryPercentageLabels[i].X,
-                    PrimaryPercentageLabels[i].Y,
-                    "middle")))              
-                    
-                @(new MarkupString(SvgHelper.CreateSvgText(
-                    Parameters.SecondaryValueLabelFormatter?.Invoke(item) ?? SecondaryPercentageLabels[i].Label,
-                    SecondaryPercentageLabels[i].X,
-                    SecondaryPercentageLabels[i].Y,
-                    "middle")))
+
+
+                if(IsShowingPrimaryValues || PrimaryPoints[i] == SelectedPoint)
+                {
+                    @(
+                        new MarkupString(SvgHelper.CreateSvgText(
+                        Parameters.PrimaryValueLabelFormatter?.Invoke(item) ?? PrimaryPercentageLabels[i].Label,
+                        PrimaryPercentageLabels[i].X,
+                        PrimaryPercentageLabels[i].Y,
+                        "middle"))
+                        )
+                }
+
+
+                if(IsShowingSecondValues || SecondaryPoints[i] == SelectedPoint)
+                {
+                    @(
+                        new MarkupString(SvgHelper.CreateSvgText(
+                        Parameters.SecondaryValueLabelFormatter?.Invoke(item) ?? SecondaryPercentageLabels[i].Label,
+                        SecondaryPercentageLabels[i].X,
+                        SecondaryPercentageLabels[i].Y,
+                        "middle"))
+                        )
+                }
+
+
 
                 @(new MarkupString(SvgHelper.CreateSvgText(
                     Parameters.BottomLabelFormatter?.Invoke(item) ?? item.Label,

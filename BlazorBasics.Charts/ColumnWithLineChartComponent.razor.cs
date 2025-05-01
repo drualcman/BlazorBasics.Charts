@@ -13,6 +13,9 @@ public partial class ColumnWithLineChartComponent
     private string Style;
     private string WrapperCss = "";
     private ColumnDataItem SelectedItem;
+    private ColumnBar SelectedPoint;
+    bool IsShowingPrimaryValues;
+    bool IsShowingSecondValues;
 
     private int ChartHeight => (int)(Parameters.BarWidth * 6);
     private int CalculatedWidth => (Data.Data.Count() * (Parameters.BarWidth + Parameters.Spacing)) + Parameters.Margin;
@@ -102,7 +105,7 @@ public partial class ColumnWithLineChartComponent
         PrimaryPoints.Add(new(pointX, primaryPercentagePointY, 0, 0, Parameters.PrimaryPercentageLineColor));
         SecondaryPoints.Add(new(pointX, secondaryPercentagePointY, 0, 0, Parameters.SecondaryPercentageLineColor));
 
-        BigTotalPercentageLabels.Add(new($"{(int)grandTotalPercentage}%", pointX, (int)(grandTotalPointY)));
+        BigTotalPercentageLabels.Add(new($"{(int)grandTotalPercentage}%", pointX, (int)(grandTotalPointY) - 10));
         PrimaryPercentageLabels.Add(new($"{(int)primaryPercentage}%", pointX, (int)(primaryPercentagePointY)));
         SecondaryPercentageLabels.Add(new($"{(int)secondaryPercentage}%", pointX, (int)(secondaryPercentagePointY)));
         BottomLabels.Add(new(item.Label, (int)(x + (Parameters.BarWidth / 2)), (int)(ChartHeight + Parameters.Margin + 20)));
@@ -124,14 +127,35 @@ public partial class ColumnWithLineChartComponent
 
     private async Task OnColumnClick(ColumnDataItem item)
     {
+        IsShowingPrimaryValues = false;
+        IsShowingSecondValues = false;
+        SelectedPoint = null;
         SelectedItem = item;
         await OnItemClick.InvokeAsync(item);
     }
 
-    private async Task OnPointClick(ColumnDataItem item)
+    private async Task OnPointClick(ColumnDataItem item, ColumnBar point)
     {
+        IsShowingPrimaryValues = false;
+        IsShowingSecondValues = false;
+        SelectedPoint = point;
         SelectedItem = item;
-        await OnItemClick.InvokeAsync(item);
+        await OnItemClick.InvokeAsync(SelectedItem);
+    }
+
+    void ShowPrimaryValues()
+    {
+        SelectedPoint = null;
+        SelectedItem = null;
+        IsShowingPrimaryValues = true;
+        IsShowingSecondValues = false;
+    }
+    void ShowSecondValues()
+    {
+        SelectedPoint = null;
+        SelectedItem = null;
+        IsShowingPrimaryValues = false;
+        IsShowingSecondValues = true;
     }
 }
 
