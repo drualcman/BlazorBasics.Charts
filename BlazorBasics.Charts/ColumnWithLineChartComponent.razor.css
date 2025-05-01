@@ -17,6 +17,7 @@
     justify-content: center;
     gap: 20px;
     margin-bottom: 20px;
+    flex-wrap: wrap;
 }
 
 .legend-item {
@@ -44,7 +45,14 @@
     display: inline-block;
     width: 15px;
     height: 2px;
+}
+
+.grand-total {
     background-color: #e15759;
+}
+
+.active-percentage {
+    background-color: #59a84b;
 }
 
 .chart-area {
