@@ -6,6 +6,12 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+    position: relative;
+    --primary-color: #4e79a7;
+    --secondary-color: #f28e2b;
+    --grand-total-color: #e15759;
+    --primary-percentage-color: #59a84b;
+    --secondary-percentage-color: #ed49ff;
 }
 
 .chart-title {
@@ -28,7 +34,8 @@
 .legend-item {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 0.5rem;
+    font-size: 0.9rem;
 }
 
 .legend-color {
@@ -39,11 +46,11 @@
 }
 
 .primary-values {
-    background-color: #4e79a7;
+    background-color: var(--primary-color);
 }
 
 .secondary-values {
-    background-color: #f28e2b;
+    background-color: var(--secondary-color);
 }
 
 .legend-line {
@@ -53,20 +60,20 @@
 }
 
 .grand-total {
-    background-color: #e15759;
+    background-color: var(--grand-total-color);
 }
 
 .primary-percentage {
-    background-color: #59a84b;
+    background-color: var(--primary-percentage-color);
 }
 
 .secondary-percentage {
-    background-color: #ed49ff;
+    background-color: var(--secondary-percentage-color);
 }
 
 .chart-area {
     flex-grow: 1;
-    min-height: 0; /* Importante para flexbox */
+    min-height: 0;
     width: 100%;
 }
 
@@ -74,4 +81,15 @@
     width: 100%;
     height: 100%;
     overflow: visible;
+}
+
+.tooltip {
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    padding: 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 100;
+    pointer-events: none;
 }

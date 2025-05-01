@@ -1,75 +1,123 @@
-﻿<div class="bar-chart-container" style="
-        --chart-height: @(ChartHeight)px;
-        --chart-width: @(ChartWidth)px">
-    <div class="chart-title">MobileAP Subs vs. Monthly Active Users</div>
+﻿<div class="bar-chart-container @WrapperCss" style="@Style">
+    @if(Parameters.ShowTitle)
+    {
+        <div class="chart-title">@Data.Title</div>
+    }
 
-    <div class="chart-legend">
-        <div class="legend-item">
-            <span class="legend-color primary-values"></span>
-            <span>Primary Users</span>
+    @if(Parameters.ShowLegend)
+    {
+        <div class="chart-legend">
+            <div class="legend-item">
+                <span class="legend-color primary-values"></span>
+                <span>@Data.PrimaryLegend</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color secondary-values"></span>
+                <span>@Data.SecondaryLegend</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-line grand-total"></span>
+                <span>% of Grand Total</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-line primary-percentage"></span>
+                <span>% @Data.PrimaryLegend</span>
+            </div> 
+            <div class="legend-item">
+                <span class="legend-line primary-percentage"></span>
+                <span>% @Data.SecondaryLegend</span>
+            </div>
         </div>
-        <div class="legend-item">
-            <span class="legend-color secondary-values"></span>
-            <span>Secondary Users</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-line grand-total"></span>
-            <span>% of Grand Total</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-line primary-percentage"></span>
-            <span>% Primary Value</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-line secondary-percentage"></span>
-            <span>% Secondary Value</span>
-        </div>
-    </div>
+    }
 
     <div class="chart-area">
         <svg class="chart-svg" viewBox="@ViewBox" preserveAspectRatio="xMidYMid meet">
             <!-- Eje X -->
-            <line x1="@(margin - spacing)" y1="@(ChartHeight + margin + 5)" x2="@(ChartWidth)" y2="@(ChartHeight + margin + 5)" stroke="#ccc" stroke-width="1" />
+            <line x1="@(Parameters.Margin - Parameters.Spacing)"
+                  y1="@(ChartHeight + Parameters.Margin + 5)"
+                  x2="@(CalculatedWidth)"
+                  y2="@(ChartHeight + Parameters.Margin + 5)"
+                  stroke="#ccc" stroke-width="1" />
+            @{
+                int rows = Data.Data.Count();
+            }
 
-            @for(var i = 0; i < Data.Count; i++)
+            @for(var i = 0; i < rows; i++)
             {
+                var item = Data.Data.ElementAt(i);
                 <rect x="@ColumnsPrimary[i].X"
                       y="@ColumnsPrimary[i].Y"
                       width="@ColumnsPrimary[i].Width"
                       height="@ColumnsPrimary[i].Height"
-                      fill="@ColumnsPrimary[i].Color" />
-
-                // Barra de usuarios inactivos
+                      fill="@ColumnsPrimary[i].Color"
+                      @onclick="() => OnColumnClick(item)" />
 
                 <rect x="@ColumnsSecondary[i].X"
                       y="@ColumnsSecondary[i].Y"
                       width="@ColumnsSecondary[i].Width"
                       height="@ColumnsSecondary[i].Height"
-                      fill="@ColumnsSecondary[i].Color" />
+                      fill="@ColumnsSecondary[i].Color"
+                      @onclick="() => OnColumnClick(item)" />
 
-                // Círculos para los puntos
-                <circle cx="@PrimaryPoints[i].X" cy="@PrimaryPoints[i].Y" r="5" fill="@PrimaryPoints[i].Color" />
-                <circle cx="@SecondaryPoints[i].X" cy="@SecondaryPoints[i].Y" r="5" fill="@SecondaryPoints[i].Color" />
+                <circle cx="@BigTotalPoints[i].X"
+                        cy="@BigTotalPoints[i].Y"
+                        r="5"
+                        fill="@BigTotalPoints[i].Color"
+                        @onclick="() => OnPointClick(item)" /> 
+                        
+                <circle cx="@PrimaryPoints[i].X"
+                        cy="@PrimaryPoints[i].Y"
+                        r="5"
+                        fill="@PrimaryPoints[i].Color"
+                        @onclick="() => OnPointClick(item)" />
 
-                // Etiquetas usando el helper
-                @(new MarkupString(SvgHelper.CreateSvgText(BigTotalPercentageLabels[i].Label, BigTotalPercentageLabels[i].X, BigTotalPercentageLabels[i].Y, "middle")))
-                @(new MarkupString(SvgHelper.CreateSvgText(PrimaryPercentageLabels[i].Label, PrimaryPercentageLabels[i].X, PrimaryPercentageLabels[i].Y, "middle")))
-                @(new MarkupString(SvgHelper.CreateSvgText(SecondaryPercentageLabels[i].Label, SecondaryPercentageLabels[i].X, SecondaryPercentageLabels[i].Y, "middle")))
-                @(new MarkupString(SvgHelper.CreateSvgText(BottomLabels[i].Label, BottomLabels[i].X, BottomLabels[i].Y, "middle")))
+                <circle cx="@SecondaryPoints[i].X"
+                        cy="@SecondaryPoints[i].Y"
+                        r="5"
+                        fill="@SecondaryPoints[i].Color"
+                        @onclick="() => OnPointClick(item)" />
+
+                @(new MarkupString(SvgHelper.CreateSvgText(
+                    Parameters.BigTotalValueLabelFormatter?.Invoke(item) ?? BigTotalPercentageLabels[i].Label,
+                    BigTotalPercentageLabels[i].X, 
+                    BigTotalPercentageLabels[i].Y, 
+                    "middle")))
+
+                @(new MarkupString(SvgHelper.CreateSvgText(
+                    Parameters.PrimaryValueLabelFormatter?.Invoke(item) ?? PrimaryPercentageLabels[i].Label,
+                    PrimaryPercentageLabels[i].X,
+                    PrimaryPercentageLabels[i].Y,
+                    "middle")))              
+                    
+                @(new MarkupString(SvgHelper.CreateSvgText(
+                    Parameters.SecondaryValueLabelFormatter?.Invoke(item) ?? SecondaryPercentageLabels[i].Label,
+                    SecondaryPercentageLabels[i].X,
+                    SecondaryPercentageLabels[i].Y,
+                    "middle")))
+
+                @(new MarkupString(SvgHelper.CreateSvgText(
+                    Parameters.BottomLabelFormatter?.Invoke(item) ?? item.Label,
+                    BottomLabels[i].X,
+                    BottomLabels[i].Y,
+                    "middle")))
             }
 
-            <!-- Línea del porcentaje del total general -->
             <polyline points="@string.Join(" ", GrandTotalPoints.Select(p => $"{p.X},{p.Y}"))"
-                      fill="none" stroke="#e15759" stroke-width="2" />
+                      fill="none" stroke="@Parameters.GrandTotalLineColor" stroke-width="2" />
 
-            <!-- Línea del porcentaje primario -->
             <polyline points="@string.Join(" ", PrimaryPercentagePoints.Select(p => $"{p.X},{p.Y}"))"
-                      fill="none" stroke="#59a84b" stroke-width="2" />
+                      fill="none" stroke="@Parameters.PrimaryPercentageLineColor" stroke-width="2" />
 
-            <!-- Línea del porcentaje secundario -->
             <polyline points="@string.Join(" ", SecondaryPercentagePoints.Select(p => $"{p.X},{p.Y}"))"
-                      fill="none" stroke="#ed49ff" stroke-width="2" />
+                      fill="none" stroke="@Parameters.SecondaryPercentageLineColor" stroke-width="2" />
         </svg>
-
     </div>
+
+    @if(SelectedItem != null)
+    {
+        <div class="tooltip">
+            @(new MarkupString(Parameters.TooltipFormatter?.Invoke(SelectedItem) ??
+                $"{SelectedItem.Label}<br>Primary: {SelectedItem.PrimaryValue}<br>Secondary: {SelectedItem.SecondaryValue}"))
+        </div>
+    }
 </div>

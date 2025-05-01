@@ -2,87 +2,144 @@ namespace BlazorBasics.Charts;
 
 public partial class ColumnWithLineChartComponent
 {
-    [Parameter] public List<ChartDataItem> Data { get; set; } = new();
+    [Parameter] public ColumnWithLineChartData Data { get; set; }
+    [Parameter] public ColumnWithLineChartParams Parameters { get; set; } = new();
 
-    // Constantes para el layout
-    const int margin = 15;
-    int ChartHeight => (int)(barWidth * 6);
-    const int barWidth = 75;
-    const int spacing = 15;
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object> Attributes { get; set; }
 
-    // Calcular valores
-    int MaxColumnTotal => Data.Max(x => x.Value);
-    int GrandTotal => Data.Sum(x => x.Value);
+    [Parameter] public EventCallback<ColumnDataItem> OnItemClick { get; set; }
 
-    List<LinePoints> GrandTotalPoints = new List<LinePoints>();
-    List<LinePoints> PrimaryPercentagePoints = new List<LinePoints>();
-    List<LinePoints> SecondaryPercentagePoints = new List<LinePoints>();
-    List<ColumnBar> ColumnsPrimary = new List<ColumnBar>();
-    List<ColumnBar> ColumnsSecondary = new List<ColumnBar>();
-    List<ColumnBar> PrimaryPoints = new List<ColumnBar>();
-    List<ColumnBar> SecondaryPoints = new List<ColumnBar>();
-    List<ChartLabels> BottomLabels = new List<ChartLabels>();
-    List<ChartLabels> BigTotalPercentageLabels = new List<ChartLabels>();
-    List<ChartLabels> PrimaryPercentageLabels = new List<ChartLabels>();
-    List<ChartLabels> SecondaryPercentageLabels = new List<ChartLabels>();
-    //int ChartHeight => Math.Max((int)(ColumnsPrimary.Max(c => c.Y) + ColumnsSecondary.Max(c => c.Y)), chartHeight);
-    int ChartWidth => (Data.Count * (barWidth + spacing) + margin);
+    private string Style;
+    private string WrapperCss = "";
+    private ColumnDataItem SelectedItem;
 
+    private int ChartHeight => (int)(Parameters.BarWidth * 6);
+    private int CalculatedWidth => (Data.Data.Count() * (Parameters.BarWidth + Parameters.Spacing)) + Parameters.Margin;
+    private int CalculatedHeight => ChartHeight + (Parameters.Margin * 3);
     private string ViewBox => $"0 0 {CalculatedWidth} {CalculatedHeight}";
-    private int CalculatedWidth => (Data.Count * (barWidth + spacing)) + margin;
-    private int CalculatedHeight => ChartHeight + (margin * 3);
+
+    // Listas internas para el renderizado
+    private List<LinePoints> GrandTotalPoints = new();
+    private List<LinePoints> PrimaryPercentagePoints = new();
+    private List<LinePoints> SecondaryPercentagePoints = new();
+    private List<ColumnBar> ColumnsPrimary = new();
+    private List<ColumnBar> ColumnsSecondary = new();
+    private List<ColumnBar> BigTotalPoints = new();
+    private List<ColumnBar> PrimaryPoints = new();
+    private List<ColumnBar> SecondaryPoints = new();
+    private List<ChartLabels> BigTotalPercentageLabels = new();
+    private List<ChartLabels> BottomLabels = new();
+    private List<ChartLabels> PrimaryPercentageLabels = new();
+    private List<ChartLabels> SecondaryPercentageLabels = new();
 
     protected override void OnParametersSet()
     {
-        for(var i = 0; i < Data.Count; i++)
+        InitializeStyles();
+        CalculateChartData();
+    }
+
+    private void InitializeStyles()
+    {
+        if(Attributes?.TryGetValue("class", out var css) == true)
+            WrapperCss = css.ToString();
+
+        Style = $"--primary-color: {Parameters.PrimaryColor}; " +
+                $"--secondary-color: {Parameters.SecondaryColor}; " +
+                $"--grand-total-color: {Parameters.GrandTotalLineColor}; " +
+                $"--primary-percentage-color: {Parameters.PrimaryPercentageLineColor};" +
+                $"--secondary-percentage-color: {Parameters.SecondaryPercentageLineColor};";
+
+        if(Attributes?.TryGetValue("style", out var style) == true)
         {
-            var item = Data[i];
-            var columnTotal = item.Value;
-            var primaryPercentage = columnTotal > 0 ? (item.PrimaryValue * 100.0 / columnTotal) : 0;
-            var secondaryPercentage = columnTotal > 0 ? (item.SecondaryValue * 100.0 / columnTotal) : 0;
-            var columnHeight = columnTotal * ChartHeight / MaxColumnTotal;
-            var grandTotalPercentage = columnTotal * 100.0 / GrandTotal;
-
-            // Posiciones
-            var x = margin + (i * (barWidth + spacing));
-            var yBase = margin + ChartHeight;
-
-            // Barra primaria
-            var primaryHeight = (int)(columnHeight * primaryPercentage / 100);
-            ColumnsPrimary.Add(new(x, yBase - columnHeight, barWidth, primaryHeight, "#4e79a7"));
-
-            // Barra de secundaria
-            ColumnsSecondary.Add(new(x, yBase - columnHeight + primaryHeight, barWidth, columnHeight - primaryHeight, "#f28e2b"));
-
-            // Punto del porcentaje del total general
-            var pointX = x + (barWidth / 2);
-            var grandTotalPointY = yBase - (ChartHeight * grandTotalPercentage / 100);
-            GrandTotalPoints.Add(new(pointX, grandTotalPointY));
-
-            // Punto del primario
-            var primaryPercentagePointY = yBase - columnHeight + (columnHeight * (100 - primaryPercentage) / 100);
-            PrimaryPercentagePoints.Add(new(pointX, primaryPercentagePointY));
-
-            // Punto del secundario
-            var secondaryPercentagePointY = yBase - columnHeight + (columnHeight * (100 - secondaryPercentage) / 100);
-            SecondaryPercentagePoints.Add(new(pointX, secondaryPercentagePointY));
-
-
-            PrimaryPoints.Add(new(pointX, grandTotalPointY, 0, 0, "#e15759"));
-            SecondaryPoints.Add(new(pointX, primaryPercentagePointY, 0, 0, "#59a84b"));
-
-            BigTotalPercentageLabels.Add(new($"{(int)grandTotalPercentage}%", pointX, (int)(grandTotalPointY)));
-            PrimaryPercentageLabels.Add(new($"{(int)primaryPercentage}%", pointX, (int)(primaryPercentagePointY)));
-            SecondaryPercentageLabels.Add(new($"{(int)secondaryPercentage}%", pointX, (int)(secondaryPercentagePointY)));
-            BottomLabels.Add(new(item.Label, (int)(x + (barWidth / 2)), (int)(ChartHeight + margin + 20)));
+            Style += style.ToString();
+            Attributes.Remove("style");
         }
+    }
+
+    private void CalculateChartData()
+    {
+        ClearCollections();
+
+        var maxColumnTotal = Data.Data.Max(x => x.Value);
+        var grandTotal = Data.Data.Sum(x => x.Value);
+
+        for(var i = 0; i < Data.Data.Count(); i++)
+        {
+            var item = Data.Data.ElementAt(i);
+            CalculateColumn(item, i, maxColumnTotal, grandTotal);
+        }
+    }
+
+    private void CalculateColumn(ColumnDataItem item, int index, decimal maxColumnTotal, decimal grandTotal)
+    {
+        var primaryPercentage = item.Value > 0 ? (item.PrimaryValue * 100.0m / item.Value) : 0;
+        var secondaryPercentage = item.Value > 0 ? (item.SecondaryValue * 100.0M / item.Value) : 0;
+        var columnHeight = (double)(item.Value * ChartHeight / maxColumnTotal);
+        var grandTotalPercentage = (double)(item.Value * 100.0m / grandTotal);
+
+        var x = Parameters.Margin + (index * (Parameters.BarWidth + Parameters.Spacing));
+        var yBase = Parameters.Margin + ChartHeight;
+
+        // Barras
+        var primaryHeight = (double)((decimal)columnHeight * primaryPercentage / 100.0m);
+        ColumnsPrimary.Add(new(x, yBase - columnHeight, Parameters.BarWidth, (int)primaryHeight, Parameters.PrimaryColor));
+        ColumnsSecondary.Add(new(x, yBase - columnHeight + primaryHeight, Parameters.BarWidth, (int)(columnHeight - primaryHeight), Parameters.SecondaryColor));
+
+        // Puntos
+        var pointX = x + (Parameters.BarWidth / 2);
+        var grandTotalPointY = yBase - (ChartHeight * grandTotalPercentage / 100);
+        GrandTotalPoints.Add(new(pointX, grandTotalPointY));
+
+        var primaryPercentagePointY = yBase - columnHeight + (columnHeight * (100 - (double)primaryPercentage) / 100);
+        PrimaryPercentagePoints.Add(new(pointX, primaryPercentagePointY));
+
+        var secondaryPercentagePointY = yBase - columnHeight + (columnHeight * (100 - (double)secondaryPercentage) / 100);
+        SecondaryPercentagePoints.Add(new(pointX, secondaryPercentagePointY));
+
+        // Etiquetas
+        BigTotalPoints.Add(new(pointX, grandTotalPointY, 0, 0, Parameters.GrandTotalLineColor));
+        PrimaryPoints.Add(new(pointX, primaryPercentagePointY, 0, 0, Parameters.PrimaryPercentageLineColor));
+        SecondaryPoints.Add(new(pointX, secondaryPercentagePointY, 0, 0, Parameters.SecondaryPercentageLineColor));
+
+        BigTotalPercentageLabels.Add(new($"{(int)grandTotalPercentage}%", pointX, (int)(grandTotalPointY)));
+        PrimaryPercentageLabels.Add(new($"{(int)primaryPercentage}%", pointX, (int)(primaryPercentagePointY)));
+        SecondaryPercentageLabels.Add(new($"{(int)secondaryPercentage}%", pointX, (int)(secondaryPercentagePointY)));
+        BottomLabels.Add(new(item.Label, (int)(x + (Parameters.BarWidth / 2)), (int)(ChartHeight + Parameters.Margin + 20)));
+    }
+
+    private void ClearCollections()
+    {
+        GrandTotalPoints.Clear();
+        PrimaryPercentagePoints.Clear();
+        SecondaryPercentagePoints.Clear();
+        ColumnsPrimary.Clear();
+        ColumnsSecondary.Clear();
+        PrimaryPoints.Clear();
+        BottomLabels.Clear();
+        PrimaryPercentageLabels.Clear();
+        SecondaryPercentageLabels.Clear();
+        BigTotalPercentageLabels.Clear();
+    }
+
+    private async Task OnColumnClick(ColumnDataItem item)
+    {
+        SelectedItem = item;
+        await OnItemClick.InvokeAsync(item);
+    }
+
+    private async Task OnPointClick(ColumnDataItem item)
+    {
+        SelectedItem = item;
+        await OnItemClick.InvokeAsync(item);
     }
 }
 
-public class LinePoints
+// Clases internas
+internal class LinePoints
 {
-    public double X { get; set; }
-    public double Y { get; set; }
+    public double X { get; }
+    public double Y { get; }
 
     public LinePoints(double x, double y)
     {
@@ -90,13 +147,14 @@ public class LinePoints
         Y = y;
     }
 }
-public class ColumnBar
+
+internal class ColumnBar
 {
-    public double X { get; set; }
-    public double Y { get; set; }
-    public int Width { get; set; }
-    public int Height { get; set; }
-    public string Color { get; set; }
+    public double X { get; }
+    public double Y { get; }
+    public int Width { get; }
+    public int Height { get; }
+    public string Color { get; }
 
     public ColumnBar(double x, double y, int width, int height, string color)
     {
@@ -108,19 +166,11 @@ public class ColumnBar
     }
 }
 
-public class ChartDataItem
+internal class ChartLabels
 {
-    public string Label { get; set; } = string.Empty;
-    public int PrimaryValue { get; set; }
-    public int SecondaryValue { get; set; }
-    public int Value => PrimaryValue + SecondaryValue;
-}
-
-public class ChartLabels
-{
-    public string Label { get; set; }
-    public int X { get; set; }
-    public int Y { get; set; }
+    public string Label { get; }
+    public int X { get; }
+    public int Y { get; }
 
     public ChartLabels(string label, int x, int y)
     {
