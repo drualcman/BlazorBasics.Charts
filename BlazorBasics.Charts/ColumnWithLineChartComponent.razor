@@ -1,54 +1,83 @@
-﻿<div class="column-chart @WrapperCss" style="@Style">
-    <div class="column-chart @WrapperCss" style="@Style">
-        @foreach(var topic in Topics)
-        {
-            <div class="columnchart-container" title="@topic.ShowTitle()">
-                @if(Parameters.ShowValues)
-                {
-                    <div class="columnchart-labels columnchart-labels-top">
-                        <span class="columnchart-quantity">@topic.PrimaryPercentage / @topic.SecondaryPercentage</span>
-                    </div>
-                }
-                <div class="columnchart-background">
-                    <!-- Primary value bar -->
-                    <div class="columnchart-foreground primary-bar" style="background-color: @GetColour(topic, true); height: @GetPercentageHeight(topic, true).ToString(CultureInfo.InvariantCulture)%;"></div>
-                    <!-- Secondary value bar stacked on top -->
-                    <div class="columnchart-foreground secondary-bar" style="background-color: @GetColour(topic, false); height: @GetPercentageHeight(topic, false).ToString(CultureInfo.InvariantCulture)%; bottom: @GetPercentageHeight(topic, true).ToString(CultureInfo.InvariantCulture)%;"></div>
-                    <!-- Percentage point -->
-                    <div class="percentage-point" style="bottom: @GetPercentageHeight(topic.Value, TotalValue).ToString(CultureInfo.InvariantCulture)%;">
-                        <span class="percentage-label">@topic.GetPercentage(TotalValue)%</span>
-                    </div>
-                </div>
-                <div class="columnchart-labels columnchart-labels-bottom">
-                    <span class="columnchart-name">@topic.Name</span>
-                </div>
-            </div>
-        }
-        <!-- Percentage line connecting the points -->
-        <svg class="percentage-line" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-            @if(Topics.Count() > 1)
+﻿// BarChartWithPercentage.razor
+@using System.Linq
+
+<div class="bar-chart-container">
+    <div class="chart-title">MobileAP Subs vs. Monthly Active Users</div>
+    
+    <div class="chart-legend">
+        <div class="legend-item">
+            <span class="legend-color active-users"></span>
+            <span>Active Users</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color non-active-users"></span>
+            <span>Non-Active Users</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-line"></span>
+            <span>% Active</span>
+        </div>
+    </div>
+    
+    <div class="chart-area">
+        <svg class="chart-svg" xmlns="http://www.w3.org/2000/svg">
+            @{
+                // Constantes para el layout
+                const int margin = 40;
+                const int chartHeight = 300;
+                const int barWidth = 50;
+                const int spacing = 30;
+                int totalWidth = (Data.Count * (barWidth + spacing)) + margin;
+                
+                // Calcular valores máximos
+                var maxTotal = Data.Any() ? Data.Max(x => x.ActiveUsers + x.NonActiveUsers) : 1;
+                var points = new List<(double X, double Y)>();
+            }
+            
+            <!-- Eje X -->
+            <line x1="@margin" y1="@(chartHeight + margin)" x2="@(totalWidth)" y2="@(chartHeight + margin)" stroke="#ccc" stroke-width="1" />
+            
+            @for (var i = 0; i < Data.Count; i++)
             {
-                for(int i = 0; i < Topics.Count() - 1; i++)
-                {
-                    var topic1 = Topics.ElementAt(i);
-                    var topic2 = Topics.ElementAt(i + 1);
-
-                    // Calcular el ancho total de cada columna (incluyendo márgenes)
-                    var columnWidth = Parameters.Thickness + 20; // 20px de margen (10px a cada lado)
-                    var totalWidth = columnWidth * Topics.Count(); // Ancho total considerando todas las columnas
-                    var x1 = ((i + 0.5) * columnWidth / totalWidth) * 100; // Centro de la columna i
-                    var x2 = ((i + 1.5) * columnWidth / totalWidth) * 100; // Centro de la columna i+1
-
-                    var y1 = 100 - GetPercentageHeight(topic1.Value, TotalValue);
-                    var y2 = 100 - GetPercentageHeight(topic2.Value, TotalValue);
-
-                    // Ajustar las coordenadas y para el espacio de las etiquetas superiores (30px)
-                    var chartHeight = Parameters.Dimension - 30; // Altura del gráfico menos etiquetas superiores
-                    var adjustedY1 = (y1 / 100) * chartHeight; // Escalar y1 al espacio disponible
-                    var adjustedY2 = (y2 / 100) * chartHeight; // Escalar y2 al espacio disponible
-
-                    <line x1="@x1%" y1="@adjustedY1" x2="@x2%" y2="@adjustedY2" stroke="blue" stroke-width="2" />
-                }
+                var item = Data[i];
+                var total = item.ActiveUsers + item.NonActiveUsers;
+                var activePercentage = total > 0 ? (item.ActiveUsers * 100.0 / total) : 0;
+                var barHeight = total * chartHeight / maxTotal;
+                
+                // Posiciones
+                var x = margin + (i * (barWidth + spacing));
+                var yActive = margin + chartHeight - (barHeight * activePercentage / 100);
+                var yNonActive = margin + chartHeight;
+                
+                // Barra de usuarios activos
+                <rect x="@x" y="@yActive" width="@barWidth" 
+                      height="@(barHeight * activePercentage / 100)" 
+                      fill="#4e79a7" />
+                
+                // Barra de usuarios inactivos
+                <rect x="@x" y="@(margin + chartHeight - barHeight)" 
+                      width="@barWidth" 
+                      height="@(barHeight * (100 - activePercentage) / 100)" 
+                      fill="#f28e2b" />
+                
+                // Punto de porcentaje
+                var pointX = x + (barWidth / 2);
+                var pointY = margin + chartHeight - (barHeight * activePercentage / 100);
+                points.Add((pointX, pointY));
+                
+                <circle cx="@pointX" cy="@pointY" r="5" fill="#e15759" />
+                @(new MarkupString(SvgHelper.CreateSvgText($"{(int)activePercentage}%", pointX, (int)(pointY + 20), "middle")))
+                
+                // Etiqueta del mes
+                @(new MarkupString(SvgHelper.CreateSvgText(item.Month, (x + (barWidth / 2)), (int)(chartHeight + margin + 20), "middle")))
+            }
+            
+            <!-- Línea que conecta los puntos -->
+            @for (var i = 1; i < points.Count; i++)
+            {
+                <line x1="@points[i-1].X" y1="@points[i-1].Y" 
+                      x2="@points[i].X" y2="@points[i].Y" 
+                      stroke="#e15759" stroke-width="2" />
             }
         </svg>
     </div>
