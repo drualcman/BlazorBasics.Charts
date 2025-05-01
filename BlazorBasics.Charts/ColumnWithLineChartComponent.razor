@@ -27,11 +27,11 @@
                 const int chartHeight = 300;
                 const int barWidth = 50;
                 const int spacing = 30;
-                int totalWidth = (Data.Count * (barWidth + spacing)) + margin;
                 
                 // Calcular valores máximos
-                var maxTotal = Data.Any() ? Data.Max(x => x.ActiveUsers + x.NonActiveUsers) : 1;
+                var maxColumnTotal = Data.Any() ? Data.Max(x => x.ActiveUsers + x.NonActiveUsers) : 1;
                 var points = new List<(double X, double Y)>();
+                var totalWidth = (Data.Count * (barWidth + spacing)) + margin;
             }
             
             <!-- Eje X -->
@@ -40,39 +40,45 @@
             @for (var i = 0; i < Data.Count; i++)
             {
                 var item = Data[i];
-                var total = item.ActiveUsers + item.NonActiveUsers;
-                var activePercentage = total > 0 ? (item.ActiveUsers * 100.0 / total) : 0;
-                var barHeight = total * chartHeight / maxTotal;
+                var columnTotal = item.ActiveUsers + item.NonActiveUsers;
+                var activePercentage = columnTotal > 0 ? (item.ActiveUsers * 100.0 / columnTotal) : 0;
+                
+                // Altura de la columna (proporcional al máximo)
+                var columnHeight = columnTotal * chartHeight / maxColumnTotal;
                 
                 // Posiciones
                 var x = margin + (i * (barWidth + spacing));
-                var yActive = margin + chartHeight - (barHeight * activePercentage / 100);
-                var yNonActive = margin + chartHeight;
+                var yTop = margin + chartHeight - columnHeight;
                 
                 // Barra de usuarios activos
-                <rect x="@x" y="@yActive" width="@barWidth" 
-                      height="@(barHeight * activePercentage / 100)" 
+                <rect x="@x" y="@(yTop)" 
+                      width="@barWidth" 
+                      height="@(columnHeight * activePercentage / 100)" 
                       fill="#4e79a7" />
                 
                 // Barra de usuarios inactivos
-                <rect x="@x" y="@(margin + chartHeight - barHeight)" 
+                <rect x="@x" 
+                      y="@(yTop + (columnHeight * activePercentage / 100))" 
                       width="@barWidth" 
-                      height="@(barHeight * (100 - activePercentage) / 100)" 
+                      height="@(columnHeight * (100 - activePercentage) / 100)" 
                       fill="#f28e2b" />
                 
-                // Punto de porcentaje
+                // Punto de porcentaje activo (en el borde entre las dos barras)
                 var pointX = x + (barWidth / 2);
-                var pointY = margin + chartHeight - (barHeight * activePercentage / 100);
+                var pointY = yTop + (columnHeight * activePercentage / 100);
                 points.Add((pointX, pointY));
                 
                 <circle cx="@pointX" cy="@pointY" r="5" fill="#e15759" />
-                @(new MarkupString(SvgHelper.CreateSvgText($"{(int)activePercentage}%", pointX, (int)(pointY + 20), "middle")))
+                
+                // Etiqueta del porcentaje activo
+                @(new MarkupString(SvgHelper.CreateSvgText($"{(int)activePercentage}%", pointX, (int)(pointY - 10), "middle")))
+
                 
                 // Etiqueta del mes
                 @(new MarkupString(SvgHelper.CreateSvgText(item.Month, (x + (barWidth / 2)), (int)(chartHeight + margin + 20), "middle")))
             }
             
-            <!-- Línea que conecta los puntos -->
+            <!-- Línea que conecta los puntos del porcentaje activo -->
             @for (var i = 1; i < points.Count; i++)
             {
                 <line x1="@points[i-1].X" y1="@points[i-1].Y" 
