@@ -334,3 +334,81 @@ Then you can do
 ``` razor
  <RingPercentageComponent Percentage=33 Parameters="new RingParams(width: 100)" />
 ```
+## Column with lines
+Example about ColumnWithLine Chart.
+``` razor
+ <ColumnWithLineChartComponent Data=ChartData />
+
+@code {
+    private ColumnWithLineChartData ChartData = new(new List<ColumnDataItem>
+    {
+        new("ENE",200000,184615) , 
+        new("",0,0) { Label = "FEB", PrimaryValue = 300000, SecondaryValue = 245454 },  
+        new("",0,0) { Label = "MAR", PrimaryValue = 400000, SecondaryValue = 289655 },  
+        new("",0,0) { Label = "ABR", PrimaryValue = 500000, SecondaryValue = 319672 },  
+        new("",0,0) { Label = "MAY", PrimaryValue = 600000, SecondaryValue = 452830 },  
+        new("",0,0) { Label = "JUN", PrimaryValue = 700000, SecondaryValue = 466666 },  
+    })
+    {
+         PrimaryLegend = "Active Users",
+         SecondaryLegend = "Non Active Users",
+         Title = "Total users" 
+    };
+}
+
+```
+Also you can set some parameters
+``` csharp
+public class ColumnWithLineChartParams
+{
+    public int Width { get; set; } = 800;
+    public int Height { get; set; } = 500;
+    public string BackgroundColor { get; set; } = "transparent";
+    public int BarWidth { get; set; } = 15;
+    public int MinBarHeight { get; set; } = 150;
+    public int Spacing { get; set; } = 15;
+    public string PrimaryColor { get; set; } = "#4e79a7";
+    public string SecondaryColor { get; set; } = "#f28e2b";
+    public string GrandTotalLineColor { get; set; } = "#e15759";
+    public string PrimaryPercentageLineColor { get; set; } = "#59a84b";
+    public string SecondaryPercentageLineColor { get; set; } = "#ed49ff";
+    public bool ShowTitle { get; set; } = true;
+    public bool ShowLegend { get; set; } = true;
+    public bool ShowGranTotal { get; set; } = true;
+    public bool ShowPrimaryValues { get; set; } = true;
+    public bool ShowSecondaryValues { get; set; } = false;
+    public Func<ColumnDataItem, string> BigTotalValueLabelFormatter { get; set; }
+    public Func<ColumnDataItem, string> PrimaryValueLabelFormatter { get; set; }
+    public Func<ColumnDataItem, string> SecondaryValueLabelFormatter { get; set; }
+    public Func<ColumnDataItem, string> BottomLabelFormatter { get; set; }
+    public Func<ColumnDataItem, string> TooltipFormatter { get; set; }
+}
+```
+Then you can do
+``` razor
+  <ColumnWithLineChartComponent Data=ChartData Parameters=WithLineChartParams />
+  @code {
+    ColumnWithLineChartParams WithLineChartParams = new();
+
+    protected override void OnInitialized()
+    {
+        WithLineChartParams.PrimaryColor = "green";
+        WithLineChartParams.SecondaryColor = "blue";
+    }
+
+    private ColumnWithLineChartData ChartData = new(new List<ColumnDataItem>
+    {
+        new("ENE",200000,184615) , 
+        new("",0,0) { Label = "FEB", PrimaryValue = 300000, SecondaryValue = 245454 },  
+        new("",0,0) { Label = "MAR", PrimaryValue = 400000, SecondaryValue = 289655 },  
+        new("",0,0) { Label = "ABR", PrimaryValue = 500000, SecondaryValue = 319672 },  
+        new("",0,0) { Label = "MAY", PrimaryValue = 600000, SecondaryValue = 452830 },  
+        new("",0,0) { Label = "JUN", PrimaryValue = 700000, SecondaryValue = 466666 },  
+    })
+    {
+         PrimaryLegend = "Active Users",
+         SecondaryLegend = "Non Active Users",
+         Title = "Total users" 
+    };
+}
+```
