@@ -4,7 +4,7 @@
 		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.1.9</Version>
+		<Version>1.1.10</Version>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Authors>Sergi Ortiz Gomez</Authors>
@@ -16,7 +16,7 @@
 		<PackageTags>captcha;blazor;blazor server; blazor webassembly</PackageTags>
 		<PackageId>BlazorBasics.Charts</PackageId>
 		<Product>BlazorBasics.Charts</Product>
-		<PackageReleaseNotes>Add ColumnWithLineChartComponent to show columns and lines about totals. Updadte license and dependencies.</PackageReleaseNotes>
+		<PackageReleaseNotes>Fixed in LineChartComponent relabel wrong after click. Updadte license and dependencies.</PackageReleaseNotes>
 		<PackageProjectUrl>https://github.com/drualcman/BlazorBasics.Charts</PackageProjectUrl>
 	</PropertyGroup>
 
@@ -49,8 +49,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.16" Condition="'$(TargetFramework)' == 'net8.0'" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.5" Condition="'$(TargetFramework)' == 'net9.0'" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.17" Condition="'$(TargetFramework)' == 'net8.0'" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.6" Condition="'$(TargetFramework)' == 'net9.0'" />
 	</ItemGroup>
 
 	<ItemGroup>

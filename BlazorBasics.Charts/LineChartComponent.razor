@@ -10,7 +10,7 @@
             <!-- Y Labels and grid lines -->
             @if(Parameters.ShowY)
             {
-                foreach(MarkupString label in LineChartYHandler.GetYLabels())
+                foreach(MarkupString label in LabelsY)
                 {
                     @label
                 }
@@ -19,7 +19,7 @@
             <!-- X Labels and grid lines -->
             @if(Parameters.ShowX)
             {
-                foreach(MarkupString label in LineChartXHandler.GetXLabels())
+                foreach(MarkupString label in LabelsX)
                 {
                     @label
                 }
@@ -28,7 +28,7 @@
             <!-- Dots and lines -->
             @foreach(LineSeries serie in ChartData)
             {
-                if(SelectedSerie is not null && SelectedSerie.Equals(serie))
+                if(SelectedSerie?.Equals(serie) ?? false)
                 {                       
                     <polyline points="@LineChartCoordinatesHandler.GetPoints(serie.Values)" class="line-series" style="stroke:@serie.Color;" />
 
