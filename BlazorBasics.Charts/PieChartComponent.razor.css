@@ -51,7 +51,7 @@
         }
 
 
-    .pie .legent {
+    .pie .legend {
         margin: 1rem;
         list-style-type: none;
         max-height: calc(var(--pie-height)* 1.25);
@@ -59,18 +59,18 @@
         overflow-y: auto;
     }
 
-        .pie .legent .title {
+        .pie .legend .title {
             font-style: oblique;
             margin: 2px;
             text-align: center;
         }
 
-        .pie .legent .label {
+        .pie .legend .label {
             list-style-type: none;
             padding: 0.15rem 0.75rem;
         }
 
-            .pie .legent .label:hover {
+            .pie .legend .label:hover {
                 filter: brightness(70%);
                 cursor: pointer;
             }

@@ -37,9 +37,9 @@
         </div>
         @if(ChildContent is null)
         {
-            if(Parameters.ShowLegent)
+            if(Parameters.ShowLegend)
             {
-                <ul class="legent">
+                <ul class="legend">
                     @if (!string.IsNullOrEmpty(Parameters.Title))
                     {
                         <li class="title">@Parameters.Title</li>                        
@@ -59,7 +59,7 @@
         }
         else
         {
-            <ul class="legent">
+            <ul class="legend">
                 @foreach(var item in RenderHandler.Segments)
                 {
                     <li class="label"

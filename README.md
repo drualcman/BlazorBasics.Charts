@@ -33,7 +33,7 @@ public class PieChartParams
         IEnumerable<ChartColor> chartColours = null,
         bool showLabels = false, double centerTextSeparationPercentage = 0.85,
         bool separateBiggerByDefault = true, bool showBiggestLabel = false,
-        bool showLegent = true)
+        bool showLegend = true)
     {
         Width = width;
         Height = height;
@@ -49,7 +49,7 @@ public class PieChartParams
         CenterTextSeparationPercentage = centerTextSeparationPercentage;
         SeparateBiggerByDefault = separateBiggerByDefault;
         ShowBiggestLabel = showBiggestLabel;
-        ShowLegent = showLegent;
+        ShowLegend = showLegend;
     }
 
     public int Width { get; init; }
@@ -66,7 +66,7 @@ public class PieChartParams
     public double CenterTextSeparationPercentage { get; set; }
     public bool SeparateBiggerByDefault { get; init; }
     public bool ShowBiggestLabel { get; set; }
-    public bool ShowLegent { get; set; }
+    public bool ShowLegend { get; set; }
 }
 ```
 Then you can do
