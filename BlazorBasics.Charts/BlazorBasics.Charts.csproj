@@ -13,10 +13,10 @@
 		<Copyright>Free</Copyright>
 		<RepositoryUrl>https://github.com/drualcman/BlazorBasics.Charts</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<PackageTags>captcha;blazor;blazor server; blazor webassembly</PackageTags>
+		<PackageTags>charts;pie;bars;lines;ring;percentage;blazor;blazor server; blazor webassembly</PackageTags>
 		<PackageId>BlazorBasics.Charts</PackageId>
 		<Product>BlazorBasics.Charts</Product>
-		<PackageReleaseNotes>Fixed in wrong spelling. Updadte license and dependencies.</PackageReleaseNotes>
+		<PackageReleaseNotes>Fixed possible divide by zero</PackageReleaseNotes>
 		<PackageProjectUrl>https://github.com/drualcman/BlazorBasics.Charts</PackageProjectUrl>
 	</PropertyGroup>
 

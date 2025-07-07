@@ -44,8 +44,13 @@ internal class LineChartCoordinatesHandler
 
     private (int X, int Y) SetCoordinated(double xValue, double yValue)
     {
-        double normalizedX = (xValue - MinX) / (MaxX - MinX);
-        double normalizedY = (yValue - MinY) / (MaxY - MinY);
+        double rangeX = MaxX - MinX;
+        double rangeY = MaxY - MinY;
+
+        //avoid possible division by zero
+        double normalizedX = Math.Abs(rangeX) < double.Epsilon ? 0.03 : (xValue - MinX) / rangeX;
+        double normalizedY = Math.Abs(rangeY) < double.Epsilon ? 0.03 : (yValue - MinY) / rangeY;
+
         int x = MarginLeft + (int)(normalizedX * PlotWidth);
         int y = MarginTop + (int)((1 - normalizedY) * PlotHeight);
         return (x, y);
