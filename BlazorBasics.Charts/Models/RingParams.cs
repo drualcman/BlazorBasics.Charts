@@ -10,7 +10,7 @@ public class RingParams
     public string CircunferenceColour { get; init; }
     public int StrokeWidth { get; init; }
 
-    public RingParams(int width = 0, int height = 0, double fontPerspective = 3.5, string labelColor = "green",
+    public RingParams(int width = 120, int height = 120, double fontPerspective = 3.5, string labelColor = "green",
         string fromColor = "#FFD700", string toColor = "#B22222", string circunferenceColour = "#eee", int strokeWidth = 10)
     {
         Width = width;
