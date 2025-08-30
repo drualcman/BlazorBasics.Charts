@@ -14,8 +14,12 @@ internal class LineChartXHandler
     private readonly List<LineSeries> ChartData;
     private readonly LineChartCoordinatesHandler LineChartCoordinatesHandler;
     private bool NeedsRotation;
+    private bool ShowLines;
 
-    public LineChartXHandler(int axisGap, bool needsRotation, double rotationAngleXLabel, double plotWidth, double maxX, int marginTop, int marginLeft, int marginBottom, int height, IEnumerable<LineData> data, IEnumerable<string> xLabels, List<LineSeries> chartData, LineChartCoordinatesHandler lineChartCoordinatesHandler)
+    public LineChartXHandler(int axisGap, bool needsRotation, double rotationAngleXLabel,
+        double plotWidth, double maxX, int marginTop, int marginLeft, int marginBottom,
+        int height, IEnumerable<LineData> data, IEnumerable<string> xLabels, List<LineSeries> chartData,
+        LineChartCoordinatesHandler lineChartCoordinatesHandler, bool showLines)
     {
         AxisGap = axisGap;
         NeedsRotation = needsRotation;
@@ -30,6 +34,7 @@ internal class LineChartXHandler
         XLabels = xLabels;
         ChartData = chartData;
         LineChartCoordinatesHandler = lineChartCoordinatesHandler;
+        ShowLines = showLines;
     }
 
     internal IEnumerable<MarkupString> GetXLabels()
@@ -41,7 +46,7 @@ internal class LineChartXHandler
         AdjustLabelDisplay(positions);
         int i = 0;
         int labelCount = positions.Count - 1;
-        foreach((int x, int y, int rotatedY, int estimatedWidth, string label) in positions)
+        foreach ((int x, int y, int rotatedY, int estimatedWidth, string label) in positions)
         {
             string textSvg = (i > 0 && i < labelCount) && NeedsRotation
                 ? SvgHelper.CreateRotatedSvgText(label, x, rotatedY, RotationAngleXLabel, estimatedWidth)
@@ -61,21 +66,21 @@ internal class LineChartXHandler
         bool hasCustomLabels = customLabels != null && customLabels.Any();
         int labelCount = hasCustomLabels ? customLabels.Count : (int)Math.Ceiling(MaxX);
         double spacing = labelCount > 1 ? (double)PlotWidth / (labelCount - 1) : PlotWidth;
-        for(int i = 0; i < labelCount; i++)
+        for (int i = 0; i < labelCount; i++)
         {
             double percent = labelCount == 1 ? 0 : (double)i / (labelCount - 1);
             int x = MarginLeft + (int)(percent * PlotWidth);
             string label = (i + 1).ToString();
-            if(hasCustomLabels)
+            if (hasCustomLabels)
                 label = customLabels[i];
             var data = Data.First();
-            if(data.Values.Count() == labelCount)
+            if (data.Values.Count() == labelCount)
             {
                 List<ChartPoint> point = ChartData
                     .FirstOrDefault(p => p.Name == data.Name && p.Color == (string.IsNullOrEmpty(data.Color) ? "black" : data.Color))
                     ?.Values.ToList();
 
-                if(point is not null && (i < point.Count))
+                if (point is not null && (i < point.Count))
                 {
                     ChartPoint selection = LineChartCoordinatesHandler.GetCoordinates(point[i]);
                     x = (int)Math.Ceiling(selection.X) - AxisGap;
@@ -90,24 +95,24 @@ internal class LineChartXHandler
             double rotatedHeight = estimatedWidth * Math.Sin(angleRad) + fontSize * Math.Cos(angleRad);
             int rotatedY = yBase + AxisGap + (int)Math.Ceiling(rotatedHeight);
             positions.Add((xLabel, yLabel, rotatedY, estimatedWidth, label));
-            string gridLine = SvgHelper.CreateSvgLine(xLabel, MarginTop - (int)(AxisGap * 1.5), xLabel, Height - MarginBottom + AxisGap);
+            string gridLine = ShowLines ? SvgHelper.CreateSvgLine(xLabel, MarginTop - (int)(AxisGap * 1.5), xLabel, Height - MarginBottom + AxisGap) : string.Empty;
             gridLines.Add(gridLine);
         }
     }
 
     void AdjustLabelDisplay(List<(int x, int y, int rotatedY, int e, string label)> positions)
     {
-        if(positions.Count > 2)
+        if (positions.Count > 2)
         {
             int estimatedWidth = positions.Max(p => p.label.Length) * 7;
             int labelCount = positions.Count;
             double spacing = labelCount > 1 ? (double)PlotWidth / (labelCount - 1) : PlotWidth;
-            if(NeedsRotation)
+            if (NeedsRotation)
             {
                 double angleRad = ChartMathHelpers.CalculateRadious(RotationAngleXLabel);
                 double rotatedWidth = estimatedWidth * Math.Cos(angleRad);
 
-                if(rotatedWidth > spacing)
+                if (rotatedWidth > spacing)
                 {
                     List<(int x, int y, int rotatedY, int e, string label)> reducedPositions = [positions[0]];
 

@@ -41,6 +41,8 @@ public partial class LineChartComponent
     IEnumerable<MarkupString> LabelsY = [];
     LineChartData _data;
     bool IsLoading;
+    double? GlobalMinY;
+    double? GlobalMaxY;
 
     protected override void OnParametersSet()
     {
@@ -205,8 +207,8 @@ public partial class LineChartComponent
 
                 // Handlers
                 LineChartCoordinatesHandler = new LineChartCoordinatesHandler(minX, maxX, minY, maxY, PlotWidth, MarginLeft, MarginTop, PlotHeight);
-                LineChartXHandler = new LineChartXHandler(AxisGap, NeedsRotation, Parameters.RotationAngleXLabel, PlotWidth, maxX, MarginTop, MarginLeft, MarginBottom, Parameters.Height, Data.Data, Data.XLabels, ChartData, LineChartCoordinatesHandler);
-                LineChartYHandler = new LineChartYHandler(AxisGap, maxY, minY, MarginTop, MarginRight, MarginLeft, MarginBottom, Parameters.Width, Parameters.Height, Parameters.StepsY, Data.YLabels);
+                LineChartXHandler = new LineChartXHandler(AxisGap, NeedsRotation, Parameters.RotationAngleXLabel, PlotWidth, maxX, MarginTop, MarginLeft, MarginBottom, Parameters.Height, Data.Data, Data.XLabels, ChartData, LineChartCoordinatesHandler, Parameters.ShowXLines);
+                LineChartYHandler = new LineChartYHandler(AxisGap, maxY, minY, MarginTop, MarginRight, MarginLeft, MarginBottom, Parameters.Width, Parameters.Height, Parameters.StepsY, Data.YLabels, Parameters.ShowYLines);
                 LineChartMarkupHandler = new LineChartMarkupHandler(Parameters.FormatterLabelPopup, Parameters.LegendLabel);
 
                 // ====== Procesamiento caro en paralelo ======
@@ -217,6 +219,46 @@ public partial class LineChartComponent
                         {
                             serie.PointsString = LineChartCoordinatesHandler.GetPoints(serie.Values);
                         }
+                    }),
+                    Task.Run(() =>
+                    {
+                        if (Parameters.PointOptions.VisibleMaxPointLine)
+                        {
+                            ChartPoint globalMaxPoint = null;
+                            foreach (LineSeries serie in ChartData)
+                            {
+                                if (serie.MaxPoint is not null)
+                                {
+                                    if (globalMaxPoint is null || serie.MaxPoint.Y > globalMaxPoint.Y)
+                                        globalMaxPoint = serie.MaxPoint;
+                                }
+                            }
+
+                            if (globalMaxPoint is not null)
+                                GlobalMaxY = LineChartCoordinatesHandler.GetCoordinates(globalMaxPoint).Y;
+                        }
+                        else
+                            GlobalMaxY = null;
+                    }),
+                    Task.Run(() =>
+                    {
+                        if (Parameters.PointOptions.VisibleMinPointLine)
+                        {
+                            ChartPoint globalMinPoint = null;
+                            foreach (LineSeries serie in ChartData)
+                            {
+                                if (serie.MinPoint is not null)
+                                {
+                                    if (globalMinPoint is null || serie.MinPoint.Y < globalMinPoint.Y)
+                                        globalMinPoint = serie.MinPoint;
+                                }
+                            }
+
+                            if (globalMinPoint is not null)
+                                GlobalMinY = LineChartCoordinatesHandler.GetCoordinates(globalMinPoint).Y;
+                        }
+                        else
+                            GlobalMinY = null;
                     }),
                     Task.Run(() => LabelsX = LineChartXHandler.GetXLabels()),
                     Task.Run(() => LabelsY = LineChartYHandler.GetYLabels())

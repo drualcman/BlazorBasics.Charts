@@ -1,107 +1,87 @@
 ﻿<div class="chart-multiline @WrapperCss" style="@Style" @onclick=CancelSelections>
     <div class="chart">
-            <svg width="100%" height="100%" viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" preserveAspectRatio="xMidYMid meet" class="line-chart">
-                @if (IsLoading && Parameters.ShowLoading)
+        <svg width="100%" height="100%" viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" preserveAspectRatio="xMidYMid meet" class="line-chart">
+            @if (IsLoading && Parameters.ShowLoading)
+            {
+                <!-- Overlay loading dentro del SVG -->
+                <foreignObject x="0" y="0" width="100%" height="100%">
+                    <div class="loading-chart">
+                        <div class="spinner"></div>
+                    </div>
+                </foreignObject>
+            }
+            else
+            {
+                <!-- Y Axis -->
+                <line x1="@MarginLeft" y1="@(MarginTop - (AxisGap * 1.5))" x2="@MarginLeft" y2="@(Parameters.Height - MarginBottom + AxisGap)" class="axis" />
+                
+                <!-- X Axis -->
+                <line x1="@MarginLeft" y1="@(Parameters.Height - MarginBottom + AxisGap)" x2="@(Parameters.Width - MarginRight + AxisGap)" y2="@(Parameters.Height - MarginBottom + AxisGap)" class="axis" />
+                
+                <!-- Y Labels and grid lines -->
+                @if (Parameters.ShowY)
                 {
-                    <!-- Overlay loading dentro del SVG -->
-                    <foreignObject x="0" y="0" width="100%" height="100%">
-                        <div class="loading-chart">
-                            <div class="spinner"></div>
-                        </div>
-                    </foreignObject>
+                    foreach (MarkupString label in LabelsY)
+                    {
+                        @label
+                    }
                 }
-                else
+
+                <!-- X Labels and grid lines -->
+                @if (Parameters.ShowX)
                 {
-                    <!-- Y Axis -->
-                    <line x1="@MarginLeft" y1="@(MarginTop - (AxisGap * 1.5))" x2="@MarginLeft" y2="@(Parameters.Height - MarginBottom + AxisGap)" class="axis" />
-
-                    <!-- X Axis -->
-                    <line x1="@MarginLeft" y1="@(Parameters.Height - MarginBottom + AxisGap)" x2="@(Parameters.Width - MarginRight + AxisGap)" y2="@(Parameters.Height - MarginBottom + AxisGap)" class="axis" />
-
-                    <!-- Y Labels and grid lines -->
-                    @if (Parameters.ShowY)
+                    foreach (MarkupString label in LabelsX)
                     {
-                        foreach (MarkupString label in LabelsY)
-                        {
-                            @label
-                        }
+                        @label
                     }
+                }
 
-                    <!-- X Labels and grid lines -->
-                    @if (Parameters.ShowX)
+                <!-- Dots and lines -->
+                @foreach (LineSeries serie in ChartData)
+                {
+                    int p = 0;
+                    if (SelectedSerie is null)
                     {
-                        foreach (MarkupString label in LabelsX)
+                        <polyline @key="GetPolilyneSerieKey(serie)" points="@serie.PointsString" class="line-series" style="stroke:@serie.Color;" />
+
+                        if (Parameters.PointOptions.VisibleAllPoints)
                         {
-                            @label
-                        }
-                    }
-
-                    <!-- Dots and lines -->
-                    @foreach (LineSeries serie in ChartData)
-                    {
-                        int p = 0;
-                        if (SelectedSerie is null)
-                        {
-                            <polyline @key="GetPolilyneSerieKey(serie)" points="@serie.PointsString" class="line-series" style="stroke:@serie.Color;" />
-
-                            if (Parameters.PointOptions.VisibleAllPoints)
-                            {
-                                foreach (ChartPoint point in serie.Values)
-                                {
-                                    p++;
-                                    var selection = LineChartCoordinatesHandler.GetCoordinates(point);
-                                    <circle cx="@selection.X"
-                                            cy="@selection.Y"
-                                            r="@Parameters.DotRadius"
-                                            fill="@serie.Color"
-                                            stroke="white"
-                                            stroke-width="1"
-                                            style="cursor: pointer;"
-                                            @key="GetCircleSerieKey(serie,p)"
-                                            @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
-                                }
-                            }
-                            else
-                            {
-                                if (Parameters.PointOptions.VisibleMaxPoint && serie.MaxPoint is not null)
-                                {
-                                    p++;
-                                    var selection = LineChartCoordinatesHandler.GetCoordinates(serie.MaxPoint);
-                                    <circle cx="@selection.X"
-                                            cy="@selection.Y"
-                                            r="@Parameters.DotRadius"
-                                            fill="@serie.Color"
-                                            stroke="white"
-                                            stroke-width="1"
-                                            style="cursor: pointer;"
-                                            @key="GetCircleSerieKey(serie, p)"
-                                            @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
-                                }
-
-                                if (Parameters.PointOptions.VisibleMinPoint && serie.MinPoint is not null)
-                                {
-                                    p++;
-                                    var selection = LineChartCoordinatesHandler.GetCoordinates(serie.MinPoint);
-                                    <circle cx="@selection.X"
-                                            cy="@selection.Y"
-                                            r="@Parameters.DotRadius"
-                                            fill="@serie.Color"
-                                            stroke="white"
-                                            stroke-width="1"
-                                            style="cursor: pointer;"
-                                            @key="GetCircleSerieKey(serie, p)"
-                                            @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
-                                }
-                            }
-                        }
-                        else if (ReferenceEquals(SelectedSerie, serie))
-                        {
-                            <polyline @key="GetPolilyneSerieKey(serie)" points="@serie.PointsString" class="line-series" style="stroke:@serie.Color;" />
-
                             foreach (ChartPoint point in serie.Values)
                             {
                                 p++;
                                 var selection = LineChartCoordinatesHandler.GetCoordinates(point);
+                                <circle cx="@selection.X"
+                                        cy="@selection.Y"
+                                        r="@Parameters.DotRadius"
+                                        fill="@serie.Color"
+                                        stroke="white"
+                                        stroke-width="1"
+                                        style="cursor: pointer;"
+                                        @key="GetCircleSerieKey(serie,p)"
+                                        @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                            }
+                        }
+                        else
+                        {
+                            if (Parameters.PointOptions.VisibleMaxPoint && serie.MaxPoint is not null)
+                            {
+                                p++;
+                                var selection = LineChartCoordinatesHandler.GetCoordinates(serie.MaxPoint);
+                                <circle cx="@selection.X"
+                                        cy="@selection.Y"
+                                        r="@Parameters.DotRadius"
+                                        fill="@serie.Color"
+                                        stroke="white"
+                                        stroke-width="1"
+                                        style="cursor: pointer;"
+                                        @key="GetCircleSerieKey(serie, p)"
+                                        @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                            }
+
+                            if (Parameters.PointOptions.VisibleMinPoint && serie.MinPoint is not null)
+                            {
+                                p++;
+                                var selection = LineChartCoordinatesHandler.GetCoordinates(serie.MinPoint);
                                 <circle cx="@selection.X"
                                         cy="@selection.Y"
                                         r="@Parameters.DotRadius"
@@ -114,20 +94,63 @@
                             }
                         }
                     }
+                    else if (ReferenceEquals(SelectedSerie, serie))
+                    {
+                        <polyline @key="GetPolilyneSerieKey(serie)" points="@serie.PointsString" class="line-series" style="stroke:@serie.Color;" />
+
+                        foreach (ChartPoint point in serie.Values)
+                        {
+                            p++;
+                            var selection = LineChartCoordinatesHandler.GetCoordinates(point);
+                            <circle cx="@selection.X"
+                                    cy="@selection.Y"
+                                    r="@Parameters.DotRadius"
+                                    fill="@serie.Color"
+                                    stroke="white"
+                                    stroke-width="1"
+                                    style="cursor: pointer;"
+                                    @key="GetCircleSerieKey(serie, p)"
+                                    @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                        }
+                    }
                 }
 
-                @if (SelectedPoint is not null)
+                @if (GlobalMaxY.HasValue)
                 {
-                    <foreignObject x="0" y="0" width="100%" height="100%">
-                        <div class="line-data-popup-wrapper">
-                            <div class="line-data-popup" style="top: @(SelectedPoint.Y + MarginTop)px; left: @(SelectedPoint.X + MarginLeft)px" @onclick="() => SelectedPoint = null" @onclick:stopPropagation>
-                                @(LineChartMarkupHandler.GetSelectedPointLabelMarkup(SelectedPoint))
-                            </div>
-                        </div>
-                    </foreignObject>
+                    <line x1="@MarginLeft"
+                          y1="@GlobalMaxY.Value"
+                          x2="@(Parameters.Width - MarginRight)"
+                          y2="@GlobalMaxY.Value"
+                          stroke="green"
+                          stroke-dasharray="5,5"
+                          stroke-width="1" />
                 }
-            </svg>
-    
+
+                @if (GlobalMinY.HasValue)
+                {
+                    <line x1="@MarginLeft"
+                          y1="@GlobalMinY.Value"
+                          x2="@(Parameters.Width - MarginRight)"
+                          y2="@GlobalMinY.Value"
+                          stroke="red"
+                          stroke-dasharray="5,5"
+                          stroke-width="1" />
+                }
+
+            }
+
+            @if (SelectedPoint is not null)
+            {
+                <foreignObject x="0" y="0" width="100%" height="100%">
+                    <div class="line-data-popup-wrapper">
+                        <div class="line-data-popup" style="top: @(SelectedPoint.Y + MarginTop)px; left: @(SelectedPoint.X + MarginLeft)px" @onclick="() => SelectedPoint = null" @onclick:stopPropagation>
+                            @(LineChartMarkupHandler.GetSelectedPointLabelMarkup(SelectedPoint))
+                        </div>
+                    </div>
+                </foreignObject>
+            }
+        </svg>
+
     </div>
 
     @if (!IsLoading && Parameters.ShowLegend && ChartData is not null && LineChartMarkupHandler is not null)

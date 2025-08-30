@@ -11,7 +11,7 @@ public class LineChartParams(
     string lineSeriesFill = "none",
     int lineSeriesWidth = 1,
     int dotRadius = 4,
-    int stepsY = 1,
+    int stepsY = 3,
     bool showX = true,
     bool showY = true,
     bool showLegend = true,
@@ -21,7 +21,9 @@ public class LineChartParams(
     Func<LineData, string> legendLabel = null,
     LineChartPointOptions pointOptions = null,
     int maxPointPerLine = 50,
-    bool showLoading = true
+    bool showLoading = true,
+    bool showXLines = true,
+    bool showYLines = true
     )
 {
     public int Width => width;
@@ -55,4 +57,6 @@ public class LineChartParams(
     public LineChartPointOptions PointOptions { get; } = pointOptions ?? new LineChartPointOptions();
     public int MaxPointPerLine => maxPointPerLine;
     public bool ShowLoading => showLoading;
+    public bool ShowYLines => showYLines;
+    public bool ShowXLines => showXLines;
 }
