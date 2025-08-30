@@ -203,6 +203,25 @@ Example about Line Chart.
     });
 }
 ```
+Example about Line Chart with event.
+``` razor
+ <LineChart Data=ChartData OnLoading=CharLoading  />
+
+@code {
+    private LineChartData ChartData = new(new List<LineData>
+    {
+        new LineData("Line 1", "green", new List<string> { "10", "50", "15", "100", "20", "30", "25" }),
+        new LineData("Line 2", "blue",  new List<string> { "0",  "5",  "50", "33",  "33", "8",  "12" }),
+        new LineData("Line 3", "red",   new List<string> { "5",  "50", "10", "33",  "8",  "12", "15" })
+    });
+
+    bool IsChartLoading;
+    void CharLoading(bool state)
+    {
+        IsChartLoading = state;
+    }
+}
+```
 Also you can set some parameters
 ``` csharp
 public class LineChartParams(
@@ -211,19 +230,24 @@ public class LineChartParams(
     string backgroundColor = "transparent",
     string axisStroke = "black",
     int axisWidth = 2,
-    string gridLineStroke = "#ddd",
+    string gridLineStroke = "black",
     int gridWidth = 1,
     string lineSeriesFill = "none",
     int lineSeriesWidth = 1,
     int dotRadius = 4,
-    int stepsY = 1,
+    int stepsY = 3,
     bool showX = true,
     bool showY = true,
     bool showLegend = true,
     bool rotatedXLabels = false,
     double rotationAngleXLabel = 45,
     Func<string, string> formatterLabelPopup = null,
-    Func<LineData, string> legendLabel = null
+    Func<LineData, string> legendLabel = null,
+    LineChartPointOptions pointOptions = null,
+    int maxPointPerLine = 50,
+    bool showLoading = true,
+    bool showXLines = true,
+    bool showYLines = true
     )
 {
     public int Width => width;
@@ -245,15 +269,36 @@ public class LineChartParams(
     {
         get
         {
-            if(rotationAngleXLabel < 0)
+            if (rotationAngleXLabel < 0)
                 throw new ArgumentException($"Must be positive", nameof(RotationAngleXLabel));
-            if(rotationAngleXLabel > 90)
+            if (rotationAngleXLabel > 90)
                 throw new ArgumentException($"Must be less than 90", nameof(RotationAngleXLabel));
             return rotationAngleXLabel;
         }
     }
     public Func<string, string> FormatterLabelPopup => formatterLabelPopup;
     public Func<LineData, string> LegendLabel => legendLabel;
+    public LineChartPointOptions PointOptions { get; } = pointOptions ?? new LineChartPointOptions();
+    public int MaxPointPerLine => maxPointPerLine;
+    public bool ShowLoading => showLoading;
+    public bool ShowYLines => showYLines;
+    public bool ShowXLines => showXLines;
+}
+
+public class LineChartPointOptions(
+    bool visibleAllPoints = false,
+    bool visibleMaxPoint = true,
+    bool visibleMinPoint = true,
+    bool visibleMaxPointLine = false,
+    bool visibleMinPointLine = false
+)
+{
+    public bool VisibleAllPoints => visibleAllPoints;
+    public bool VisibleMaxPoint => visibleMaxPoint;
+    public bool VisibleMinPoint => visibleMinPoint;
+    public bool VisibleMaxPointLine => visibleMaxPointLine;
+    public bool VisibleMinPointLine => visibleMinPointLine;
+}
 ```
 Then you can do
 ``` razor
