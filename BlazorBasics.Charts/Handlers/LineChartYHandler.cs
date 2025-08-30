@@ -49,12 +49,11 @@ internal class LineChartYHandler
         int usableHeight = plotBottom - plotTop;
         int usableHeightLocal = plotBottom - plotTop;
         int x = MarginLeft - AxisGap;
-        const int minStepHeightPx = 10; // Espacio mínimo entre etiquetas en píxeles
+        const int minStepHeightPx = 10; // Minimum spacing between labels in pixels
 
         if (customLabels != null && customLabels.Any())
         {
             int count = customLabels.Count;
-            // Calcular cuántas etiquetas caben según el espacio disponible
             int maxVisibleLabels = Math.Max(1, usableHeight / minStepHeightPx);
             int labelCount = Math.Min(count, maxVisibleLabels);
             double step = count <= 1 ? 0 : (double)(count - 1) / (labelCount - 1);
@@ -63,7 +62,9 @@ internal class LineChartYHandler
             {
                 int index = (int)Math.Round(i * step);
                 if (index >= count)
+                {
                     index = count - 1;
+                }
                 string label = customLabels[index];
                 double percent = count <= 1 ? 0 : (double)index / (count - 1);
                 int y = plotBottom - (int)(percent * usableHeight);
@@ -74,24 +75,26 @@ internal class LineChartYHandler
         }
         else
         {
-            // Compute numeric ticks based on StepsY with fallback and reduction.
             double rangeY = MaxY - MinY;
             int maxYCeiled = (int)Math.Ceiling(MaxY);
             int minYFloored = (int)Math.Floor(MinY);
 
-            // Maximum number of labels that fit vertically
-            int maxVisibleLabels = Math.Max(3, usableHeightLocal / minStepHeightPx);
+            // Expand slightly to avoid values sticking to edges
+            int padding = (int)Math.Ceiling(rangeY * 0.05);
+            if (padding == 0)
+            {
+                padding = 1;
+            }
+            minYFloored -= padding;
+            maxYCeiled += padding;
 
-            // StepsY semantics:
-            // - If StepsY is small (<=20) treat it as "tick count" (e.g. 3,5,10).
-            // - If StepsY is large (>20) treat it as "step size in units".
+            int maxVisibleLabels = Math.Max(3, usableHeightLocal / minStepHeightPx);
             int requestedSteps = StepsY > 0 ? StepsY : 5;
 
             List<int> yValues = new List<int>();
 
             if (requestedSteps <= 20)
             {
-                // Treat requestedSteps as number of segments (TickAmount).
                 int segments = requestedSteps;
                 for (int i = 0; i <= segments; i++)
                 {
@@ -106,7 +109,6 @@ internal class LineChartYHandler
             }
             else
             {
-                // Treat requestedSteps as step size in Y units.
                 int step = requestedSteps;
                 int firstMultiple = (int)Math.Ceiling(minYFloored / (double)step) * step;
 
@@ -132,7 +134,7 @@ internal class LineChartYHandler
                 }
             }
 
-            // Ensure min and max present and sorted
+            // Ensure min and max
             if (!yValues.Contains(minYFloored))
             {
                 yValues.Insert(0, minYFloored);
@@ -143,8 +145,14 @@ internal class LineChartYHandler
             }
             yValues.Sort();
 
-            // If there are too many labels, sample evenly to fit maxVisibleLabels,
-            // preserving first and last.
+            // Try to keep odd count (better centering)
+            if (yValues.Count % 2 == 0)
+            {
+                int stepSize = yValues.Count > 1 ? yValues[1] - yValues[0] : 1;
+                yValues.Add(maxYCeiled + stepSize);
+            }
+
+            // Reduce evenly if too many
             if (yValues.Count > maxVisibleLabels)
             {
                 int selectionCount = maxVisibleLabels;
@@ -181,7 +189,7 @@ internal class LineChartYHandler
                 yValues = reduced;
             }
 
-            // Map final yValues to SVG label + optional grid line
+            // Render labels
             for (int i = 0; i < yValues.Count; i++)
             {
                 int yValue = yValues[i];
@@ -192,7 +200,7 @@ internal class LineChartYHandler
                 string gridLine = ShowLines ? SvgHelper.CreateSvgLine(MarginLeft, y, Width - MarginRight + AxisGap, y) : string.Empty;
                 positions.Add((x, y, textSvg, gridLine));
             }
-
         }
     }
+
 }
