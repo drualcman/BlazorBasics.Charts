@@ -28,12 +28,14 @@
             <!-- Dots and lines -->
             @foreach(LineSeries serie in ChartData)
             {
+                int p = 0;
                 if(SelectedSerie?.Equals(serie) ?? false)
-                {                       
-                    <polyline points="@LineChartCoordinatesHandler.GetPoints(serie.Values)" class="line-series" style="stroke:@serie.Color;" />
+                {
+                    <polyline @key="GetPolilyneSerieKey(serie)" points="@LineChartCoordinatesHandler.GetPoints(serie.Values)" class="line-series" style="stroke:@serie.Color;" />
 
                     foreach(ChartPoint point in serie.Values)
                     {
+                        p++;
                         var selection = LineChartCoordinatesHandler.GetCoordinates(point);
                         <circle cx="@selection.X"
                                 cy="@selection.Y"
@@ -42,24 +44,65 @@
                                 stroke="white"
                                 stroke-width="1"
                                 style="cursor: pointer;"
+                                @key="GetCircleSerieKey(serie, p)"
                                 @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
                     }
                 }
                 else if(SelectedSerie is null)
                 {
-                    <polyline points="@LineChartCoordinatesHandler.GetPoints(serie.Values)" class="line-series" style="stroke:@serie.Color;" />
+                    <polyline @key="GetPolilyneSerieKey(serie)" points="@LineChartCoordinatesHandler.GetPoints(serie.Values)" class="line-series" style="stroke:@serie.Color;" />
 
-                    foreach(ChartPoint point in serie.Values)
+                    if (Parameters.PointOptions.VisibleAllPoints)
                     {
-                        var selection = LineChartCoordinatesHandler.GetCoordinates(point);
-                        <circle cx="@selection.X"
-                                cy="@selection.Y"
-                                r="@Parameters.DotRadius"
-                                fill="@serie.Color"
-                                stroke="white"
-                                stroke-width="1"
-                                style="cursor: pointer;"
-                                @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                        foreach (ChartPoint point in serie.Values)
+                        {
+                            p++;
+                            var selection = LineChartCoordinatesHandler.GetCoordinates(point);
+                            <circle cx="@selection.X"
+                                    cy="@selection.Y"
+                                    r="@Parameters.DotRadius"
+                                    fill="@serie.Color"
+                                    stroke="white"
+                                    stroke-width="1"
+                                    style="cursor: pointer;"
+                                    @key="GetCircleSerieKey(serie,p)"
+                                    @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                        }
+                    }
+                    else
+                    {
+                        ChartPoint maxPoint = serie.Values.OrderByDescending(p => p.Y).FirstOrDefault();
+                        ChartPoint minPoint = serie.Values.OrderBy(p => p.Y).FirstOrDefault();
+
+                        if (Parameters.PointOptions.VisibleMaxPoint && maxPoint is not null)
+                        {
+                            p++;
+                            var selection = LineChartCoordinatesHandler.GetCoordinates(maxPoint);
+                            <circle cx="@selection.X"
+                                    cy="@selection.Y"
+                                    r="@Parameters.DotRadius"
+                                    fill="@serie.Color"
+                                    stroke="white"
+                                    stroke-width="1"
+                                    style="cursor: pointer;"
+                                    @key="GetCircleSerieKey(serie, p)"
+                                    @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                        }
+
+                        if (Parameters.PointOptions.VisibleMinPoint && minPoint is not null)
+                        {
+                            p++;
+                            var selection = LineChartCoordinatesHandler.GetCoordinates(minPoint);
+                            <circle cx="@selection.X"
+                                    cy="@selection.Y"
+                                    r="@Parameters.DotRadius"
+                                    fill="@serie.Color"
+                                    stroke="white"
+                                    stroke-width="1"
+                                    style="cursor: pointer;"
+                                    @key="GetCircleSerieKey(serie, p)"
+                                    @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                        }
                     }
                 }
             }

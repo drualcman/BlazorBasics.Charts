@@ -6,7 +6,7 @@ public class LineChartParams(
     string backgroundColor = "transparent",
     string axisStroke = "black",
     int axisWidth = 2,
-    string gridLineStroke = "#ddd",
+    string gridLineStroke = "black",
     int gridWidth = 1,
     string lineSeriesFill = "none",
     int lineSeriesWidth = 1,
@@ -18,7 +18,10 @@ public class LineChartParams(
     bool rotatedXLabels = false,
     double rotationAngleXLabel = 45,
     Func<string, string> formatterLabelPopup = null,
-    Func<LineData, string> legendLabel = null
+    Func<LineData, string> legendLabel = null,
+    LineChartPointOptions pointOptions = null,
+    bool enablePolylineSimplification = true,
+    double polylineTolerancePx = 0.75
     )
 {
     public int Width => width;
@@ -40,14 +43,24 @@ public class LineChartParams(
     {
         get
         {
-            if(rotationAngleXLabel < 0)
+            if (rotationAngleXLabel < 0)
                 throw new ArgumentException($"Must be positive", nameof(RotationAngleXLabel));
-            if(rotationAngleXLabel > 90)
+            if (rotationAngleXLabel > 90)
                 throw new ArgumentException($"Must be less than 90", nameof(RotationAngleXLabel));
             return rotationAngleXLabel;
         }
     }
     public Func<string, string> FormatterLabelPopup => formatterLabelPopup;
     public Func<LineData, string> LegendLabel => legendLabel;
-
+    public LineChartPointOptions PointOptions { get; } = pointOptions ?? new LineChartPointOptions();
+    public bool EnablePolylineSimplification => enablePolylineSimplification;
+    public double PolylineTolerancePx
+    {
+        get
+        {
+            if (polylineTolerancePx < 0.0)
+                throw new ArgumentException("Must be >= 0", nameof(PolylineTolerancePx));
+            return polylineTolerancePx;
+        }
+    }
 }

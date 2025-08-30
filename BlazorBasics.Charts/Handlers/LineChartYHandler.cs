@@ -30,55 +30,82 @@ internal class LineChartYHandler
 
     internal IEnumerable<MarkupString> GetYLabels()
     {
-        List<MarkupString> labels = new List<MarkupString>();
+        List<(int x, int y, string label, string gridLine)> positions = new();
+        CalculateLabelPositions(positions);
+        return positions.Select(p => (MarkupString)(p.gridLine + p.label));
+    }
+
+    private void CalculateLabelPositions(List<(int x, int y, string label, string gridLine)> positions)
+    {
+        positions.Clear();
         List<string> customLabels = YLabels?.ToList();
         int chartHeight = Height - MarginTop - MarginBottom;
         int plotTop = MarginTop;
         int plotBottom = Height - MarginBottom;
         int usableHeight = plotBottom - plotTop;
+        int x = MarginLeft - AxisGap;
+        const int minStepHeightPx = 10; // Espacio mínimo entre etiquetas en píxeles
 
-        if(customLabels != null && customLabels.Count > 0)
+        if(customLabels != null && customLabels.Any())
         {
-            int x = MarginLeft - AxisGap;
             int count = customLabels.Count;
+            // Calcular cuántas etiquetas caben según el espacio disponible
+            int maxVisibleLabels = Math.Max(1, usableHeight / minStepHeightPx);
+            int labelCount = Math.Min(count, maxVisibleLabels);
+            double step = count <= 1 ? 0 : (double)(count - 1) / (labelCount - 1);
 
-            for(int i = 0; i < count; i++)
+            for(int i = 0; i < labelCount; i++)
             {
-                string label = customLabels[i];
-                // Repartimos desde 0 (abajo) hasta MaxY (arriba)
-                double percent = (double)i / (count - 1);
+                int index = (int)Math.Round(i * step);
+                if(index >= count)
+                    index = count - 1;
+                string label = customLabels[index];
+                double percent = count <= 1 ? 0 : (double)index / (count - 1);
                 int y = plotBottom - (int)(percent * usableHeight);
-                string textSvg = SvgHelper.CreateSvgText(label, x, y, "end");
+                string textSvg = SvgHelper.CreateSvgText(label, x, y + 4, "end");
                 string gridLine = SvgHelper.CreateSvgLine(MarginLeft, y, Width - MarginRight + AxisGap, y);
-                labels.Add((MarkupString)(gridLine + textSvg));
+                positions.Add((x, y, textSvg, gridLine));
             }
         }
         else
         {
-            int minStepHeightPx = 10;
-            int maxVisibleSteps = chartHeight / minStepHeightPx;
-            int stepValue = Math.Max(1, StepsY);
+            double rangeY = MaxY - MinY;
             int maxYCeiled = (int)Math.Ceiling(MaxY);
-            int requiredSteps = maxYCeiled / stepValue + 1;
+            int minYFloored = (int)Math.Floor(MinY);
+            int maxVisibleLabels = Math.Max(1, usableHeight / minStepHeightPx);
+            int stepValue = Math.Max(1, StepsY);
 
-            if(requiredSteps > maxVisibleSteps)
+            // Calcular el stepValue para maximizar el número de etiquetas sin exceder maxVisibleLabels
+            if(rangeY > 0)
             {
-                stepValue = Math.Max(1, (int)Math.Ceiling((double)maxYCeiled / maxVisibleSteps));
+                stepValue = Math.Max(1, (int)Math.Ceiling(rangeY / (maxVisibleLabels - 1)));
+            }
+            else
+            {
+                stepValue = 1; // Evitar división por cero
             }
 
-            int adjustedMaxY = (maxYCeiled + stepValue - 1) / stepValue * stepValue;
+            int requiredSteps = (int)((maxYCeiled - minYFloored) / stepValue) + 1;
 
-            for(int yValue = (int)MinY; yValue <= (int)MaxY; yValue += stepValue)
+            // Ajustar stepValue si hay menos de 2 etiquetas para asegurar al menos 2
+            if(requiredSteps < 2)
             {
-                double percent = (yValue - MinY) / (MaxY - MinY);
+                stepValue = (int)Math.Ceiling(rangeY);
+                requiredSteps = 2;
+            }
+
+            for(int i = 0; i < requiredSteps; i++)
+            {
+                int yValue = minYFloored + i * stepValue;
+                if(yValue > maxYCeiled)
+                    break;
+                double percent = rangeY <= 0 ? 0 : (yValue - MinY) / rangeY;
                 int y = plotBottom - (int)(percent * usableHeight);
-                int x = MarginLeft - AxisGap;
                 string label = yValue.ToString();
                 string textSvg = SvgHelper.CreateSvgText(label, x, y + 4, "end");
                 string gridLine = SvgHelper.CreateSvgLine(MarginLeft, y, Width - MarginRight + AxisGap, y);
-                labels.Add((MarkupString)(gridLine + textSvg));
+                positions.Add((x, y, textSvg, gridLine));
             }
         }
-        return labels;
     }
 }
