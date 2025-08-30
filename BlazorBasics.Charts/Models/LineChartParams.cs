@@ -20,8 +20,8 @@ public class LineChartParams(
     Func<string, string> formatterLabelPopup = null,
     Func<LineData, string> legendLabel = null,
     LineChartPointOptions pointOptions = null,
-    bool enablePolylineSimplification = true,
-    double polylineTolerancePx = 0.75
+    int maxPointPerLine = 50,
+    bool showLoading = true
     )
 {
     public int Width => width;
@@ -53,14 +53,6 @@ public class LineChartParams(
     public Func<string, string> FormatterLabelPopup => formatterLabelPopup;
     public Func<LineData, string> LegendLabel => legendLabel;
     public LineChartPointOptions PointOptions { get; } = pointOptions ?? new LineChartPointOptions();
-    public bool EnablePolylineSimplification => enablePolylineSimplification;
-    public double PolylineTolerancePx
-    {
-        get
-        {
-            if (polylineTolerancePx < 0.0)
-                throw new ArgumentException("Must be >= 0", nameof(PolylineTolerancePx));
-            return polylineTolerancePx;
-        }
-    }
+    public int MaxPointPerLine => maxPointPerLine;
+    public bool ShowLoading => showLoading;
 }
