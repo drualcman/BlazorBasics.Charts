@@ -40,7 +40,26 @@
                 @foreach (LineSeries serie in ChartData)
                 {
                     int p = 0;
-                    if (SelectedSerie is null)
+                    if (ReferenceEquals(SelectedSerie, serie))
+                    {
+                        <polyline points="@serie.PointsString" class="line-series" style="stroke:@serie.Color;" />
+
+                        foreach (ChartPoint point in serie.Values)
+                        {
+                            p++;
+                            var selection = LineChartCoordinatesHandler.GetCoordinates(point);
+                            <circle cx="@selection.X"
+                                    cy="@selection.Y"
+                                    r="@Parameters.DotRadius"
+                                    fill="@serie.Color"
+                                    stroke="white"
+                                    stroke-width="1"
+                                    style="cursor: pointer;"
+                                    @key="GetCircleSerieKey(serie, p)"
+                                    @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                        }
+                    }
+                    else if (SelectedSerie is null)
                     {
                         <polyline @key="GetPolilyneSerieKey(serie)" points="@serie.PointsString" class="line-series" style="stroke:@serie.Color;" />
 
@@ -92,25 +111,6 @@
                                         @key="GetCircleSerieKey(serie, p)"
                                         @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
                             }
-                        }
-                    }
-                    else if (ReferenceEquals(SelectedSerie, serie))
-                    {
-                        <polyline @key="GetPolilyneSerieKey(serie)" points="@serie.PointsString" class="line-series" style="stroke:@serie.Color;" />
-
-                        foreach (ChartPoint point in serie.Values)
-                        {
-                            p++;
-                            var selection = LineChartCoordinatesHandler.GetCoordinates(point);
-                            <circle cx="@selection.X"
-                                    cy="@selection.Y"
-                                    r="@Parameters.DotRadius"
-                                    fill="@serie.Color"
-                                    stroke="white"
-                                    stroke-width="1"
-                                    style="cursor: pointer;"
-                                    @key="GetCircleSerieKey(serie, p)"
-                                    @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
                         }
                     }
                 }
