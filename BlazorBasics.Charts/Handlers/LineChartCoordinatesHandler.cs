@@ -9,8 +9,9 @@ internal class LineChartCoordinatesHandler
     private readonly int MarginLeft;
     private readonly int MarginTop;
     private readonly double PlotHeight;
+    private readonly CultureInfo ParsingCulture;
 
-    public LineChartCoordinatesHandler(double minX, double maxX, double minY, double maxY, double plotWidth, int marginLeft, int marginTop, double plotHeight)
+    public LineChartCoordinatesHandler(double minX, double maxX, double minY, double maxY, double plotWidth, int marginLeft, int marginTop, double plotHeight, CultureInfo parsingCulture)
     {
         MinX = minX;
         MaxX = maxX;
@@ -20,23 +21,25 @@ internal class LineChartCoordinatesHandler
         MarginLeft = marginLeft;
         MarginTop = marginTop;
         PlotHeight = plotHeight;
+        ParsingCulture = parsingCulture;
     }
 
     internal ChartPoint GetCoordinates(ChartPoint point)
     {
         (int x, int y) cooredinates = SetCoordinated(point.X, point.Y);
-        return new(cooredinates.x, cooredinates.y, point.Value);
+        return new ChartPoint(cooredinates.x, cooredinates.y, point.Value);
     }
 
     internal string GetPoints(IEnumerable<ChartPoint> points)
     {
-        StringBuilder result = new();
+        StringBuilder result = new StringBuilder();
         IEnumerator<ChartPoint> enumerator = points.GetEnumerator();
-        while(enumerator.MoveNext())
+        while (enumerator.MoveNext())
         {
             ChartPoint point = enumerator.Current;
             (int x, int y) cooredinates = SetCoordinated(point.X, point.Y);
-            result.Append($"{cooredinates.x},{cooredinates.y} ");
+            var line = $"{cooredinates.x.ToString(ParsingCulture)} {cooredinates.y.ToString(ParsingCulture)} ";
+            result.Append(line);
 
         }
         return result.ToString();
@@ -47,12 +50,13 @@ internal class LineChartCoordinatesHandler
         double rangeX = MaxX - MinX;
         double rangeY = MaxY - MinY;
 
-        //avoid possible division by zero
+        // Avoid possible division by zero
         double normalizedX = Math.Abs(rangeX) < double.Epsilon ? 0.03 : (xValue - MinX) / rangeX;
         double normalizedY = Math.Abs(rangeY) < double.Epsilon ? 0.03 : (yValue - MinY) / rangeY;
 
-        int x = MarginLeft + (int)(normalizedX * PlotWidth);
-        int y = MarginTop + (int)((1 - normalizedY) * PlotHeight);
+        // Use rounding (not truncation) for more consistent pixel placement
+        int x = MarginLeft + (int)Math.Round(normalizedX * PlotWidth);
+        int y = MarginTop + (int)Math.Round((1.0 - normalizedY) * PlotHeight);
         return (x, y);
     }
 }

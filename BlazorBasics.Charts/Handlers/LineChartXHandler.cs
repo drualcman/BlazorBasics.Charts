@@ -15,11 +15,12 @@ internal class LineChartXHandler
     private readonly LineChartCoordinatesHandler LineChartCoordinatesHandler;
     private bool NeedsRotation;
     private bool ShowLines;
+    private readonly CultureInfo ParsingCulture;
 
     public LineChartXHandler(int axisGap, bool needsRotation, double rotationAngleXLabel,
         double plotWidth, double maxX, int marginTop, int marginLeft, int marginBottom,
         int height, IEnumerable<LineData> data, IEnumerable<string> xLabels, List<LineSeries> chartData,
-        LineChartCoordinatesHandler lineChartCoordinatesHandler, bool showLines)
+        LineChartCoordinatesHandler lineChartCoordinatesHandler, bool showLines, CultureInfo parsingCulture)
     {
         AxisGap = axisGap;
         NeedsRotation = needsRotation;
@@ -35,6 +36,7 @@ internal class LineChartXHandler
         ChartData = chartData;
         LineChartCoordinatesHandler = lineChartCoordinatesHandler;
         ShowLines = showLines;
+        ParsingCulture = parsingCulture;
     }
 
     internal IEnumerable<MarkupString> GetXLabels()
@@ -70,7 +72,7 @@ internal class LineChartXHandler
         {
             double percent = labelCount == 1 ? 0 : (double)i / (labelCount - 1);
             int x = MarginLeft + (int)(percent * PlotWidth);
-            string label = (i + 1).ToString();
+            string label = (i + 1).ToString(ParsingCulture);
             if (hasCustomLabels)
                 label = customLabels[i];
             var data = Data.First();

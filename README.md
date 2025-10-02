@@ -192,7 +192,7 @@ This is aplicable for Pie Chart, Column Chart and Bar Chart. Color can be rgb(0,
 ## Line Chart
 Example about Line Chart.
 ``` razor
- <LineChart Data=ChartData />
+ <LineChartComponent Data=ChartData ParsingCulture=CultureInfo.InvariantCulture/>
 
 @code {
     private LineChartData ChartData = new(new List<LineData>
@@ -205,7 +205,7 @@ Example about Line Chart.
 ```
 Example about Line Chart with event.
 ``` razor
- <LineChart Data=ChartData OnLoading=CharLoading  />
+ <LineChartComponent Data=ChartData OnLoading=CharLoading ParsingCulture=CultureInfo.InvariantCulture />
 
 @code {
     private LineChartData ChartData = new(new List<LineData>
@@ -302,7 +302,7 @@ public class LineChartPointOptions(
 ```
 Then you can do
 ``` razor
- <LineChart Data=ChartData Params=LineParams />
+ <LineChartComponent Data=ChartData Params=LineParams ParsingCulture=CultureInfo.InvariantCulture />
 
 @code {
     LineChartParams LineParams = new LineChartParams();

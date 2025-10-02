@@ -2,7 +2,6 @@ namespace BlazorBasics.Charts;
 
 public partial class BarChartComponent
 {
-    private Random _random = new();
     private double MaxQuantity;
     private string Style;
 
@@ -16,7 +15,8 @@ public partial class BarChartComponent
     protected override void OnParametersSet()
     {
         MaxQuantity = Topics.Any() ? Topics.Max(t => t.Value) : 0;
-        if (Attributes is not null && Attributes.TryGetValue("class", out var css)) WrapperCss = css.ToString();
+        if (Attributes is not null && Attributes.TryGetValue("class", out var css))
+            WrapperCss = css.ToString();
         Style = $"--Thickness: {Parameters.Thickness.ToString(CultureInfo.InvariantCulture)}px; " +
                 $"--Dimension: {Parameters.Dimension.ToString(CultureInfo.InvariantCulture)}%; " +
                 $"--BackgroundColour: {Parameters.BackgroundColour}; ";
@@ -31,7 +31,8 @@ public partial class BarChartComponent
     private string GetColour(ChartSegment segment)
     {
         colourIndex++;
-        if (colourIndex >= Parameters.MaxColours) colourIndex = 0;
+        if (colourIndex >= Parameters.MaxColours)
+            colourIndex = 0;
         return string.IsNullOrEmpty(segment.ChartColor) ? Parameters.ChartColors[colourIndex].Background : segment.ChartColor;
     }
 

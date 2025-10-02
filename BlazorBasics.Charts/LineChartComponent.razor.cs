@@ -13,6 +13,7 @@ public partial class LineChartComponent
 
     [Parameter] public LineChartData Data { get; set; }
     [Parameter] public LineChartParams Parameters { get; set; } = new();
+    [Parameter] public CultureInfo ParsingCulture { get; set; } = CultureInfo.InvariantCulture;
     [Parameter] public EventCallback<bool> OnLoading { get; set; } = new();
 
     [Parameter(CaptureUnmatchedValues = true)]
@@ -83,7 +84,7 @@ public partial class LineChartComponent
                 if (OnLoading.HasDelegate)
                     await OnLoading.InvokeAsync(IsLoading);
                 await Task.Yield();
-                // Colecciones concurrentes para procesamiento paralelo
+
                 ConcurrentBag<double> allYValuesConcurrent = new ConcurrentBag<double>();
                 ConcurrentBag<LineSeries> chartDataConcurrent = new ConcurrentBag<LineSeries>();
 
@@ -95,9 +96,9 @@ public partial class LineChartComponent
                 double minX = 1;
                 double maxX = maxValuesCount;
 
-                // Procesamiento pesado en threadpool
                 await Task.Run(() =>
                 {
+
                     Parallel.ForEach(Data.Data, input =>
                     {
                         List<ChartPoint> points = new List<ChartPoint>();
@@ -109,9 +110,8 @@ public partial class LineChartComponent
                             double x = j + 1;
                             double yFallback = j + 1;
                             double y = j < originalCount
-                                ? double.TryParse(valueList[j], out double value) ? value : yFallback
+                                ? double.TryParse(valueList[j], NumberStyles.Any, ParsingCulture, out double value) ? value : yFallback
                                 : 0;
-
                             allYValuesConcurrent.Add(y);
                             string label = j < originalCount ? valueList[j] : "0";
                             points.Add(new ChartPoint(x, y, label));
@@ -133,7 +133,6 @@ public partial class LineChartComponent
                 ChartData = chartDataConcurrent.ToList();
                 List<double> allYValues = allYValuesConcurrent.ToList();
 
-                // ====== Cálculo de paddings y rangos (rápido, síncrono) ======
                 if (Data.YLabels is not null && Data.YLabels.Any())
                 {
                     string longestLabel = Data.YLabels.OrderByDescending(label => label.Length).FirstOrDefault();
@@ -145,6 +144,7 @@ public partial class LineChartComponent
                     MaxYLabelWidth = 30;
                 }
 
+                // Compute raw min/max and pad
                 double minY = allYValues.Count > 0 ? allYValues.Min() : 0;
                 double maxY = allYValues.Count > 0 ? allYValues.Max() : 1;
                 double yRange = maxY - minY;
@@ -156,6 +156,7 @@ public partial class LineChartComponent
                     {
                         yRange = 1;
                     }
+
                     maxY += yRange / 2;
                     minY -= yRange / 2;
                 }
@@ -170,9 +171,11 @@ public partial class LineChartComponent
                 maxX += xPadding;
                 minX -= xPadding;
 
+                // Round to whole numbers for initial range (handler can refine)
                 minY = Math.Floor(minY);
                 maxY = Math.Ceiling(maxY);
 
+                // --- IMPORTANT: compute X-label rotation and ExtraBottomForRotatedLabels BEFORE creating YHandler
                 if (Data.XLabels is not null && Data.XLabels.Any())
                 {
                     int estimatedWidth = Data.XLabels.Max(label => label.Length) * 7;
@@ -197,6 +200,7 @@ public partial class LineChartComponent
                     ExtraBottomForRotatedLabels = AxisGap * 3;
                 }
 
+                // Account for percent under zero (works with the final PlotHeight that uses ExtraBottomForRotatedLabels)
                 double percentUnderZero = 0;
                 if (minY < 0)
                 {
@@ -205,16 +209,41 @@ public partial class LineChartComponent
                 int extraPixels = (int)(percentUnderZero * PlotHeight);
                 ExtraBottomForRotatedLabels += extraPixels;
 
-                // Handlers
-                LineChartCoordinatesHandler = new LineChartCoordinatesHandler(minX, maxX, minY, maxY, PlotWidth, MarginLeft, MarginTop, PlotHeight);
-                LineChartXHandler = new LineChartXHandler(AxisGap, NeedsRotation, Parameters.RotationAngleXLabel, PlotWidth, maxX, MarginTop, MarginLeft, MarginBottom, Parameters.Height, Data.Data, Data.XLabels, ChartData, LineChartCoordinatesHandler, Parameters.ShowXLines);
-                LineChartYHandler = new LineChartYHandler(AxisGap, maxY, minY, MarginTop, MarginRight, MarginLeft, MarginBottom, Parameters.Width, Parameters.Height, Parameters.StepsY, Data.YLabels, Parameters.ShowYLines);
+                minY = allYValues.Any() ? allYValues.Min() : 0.0;
+                maxY = allYValues.Any() ? allYValues.Max() : 1.0;
+
+                // Now create Y handler using the final MarginBottom (ExtraBottomForRotatedLabels)
+                LineChartYHandler = new LineChartYHandler(
+                    AxisGap,
+                    maxY,
+                    minY,
+                    MarginTop,
+                    MarginRight,
+                    MarginLeft,
+                    ExtraBottomForRotatedLabels,
+                    Parameters.Width,
+                    Parameters.Height,
+                    Parameters.StepsY,
+                    Data.YLabels,
+                    Parameters.ShowYLines,
+                    ParsingCulture
+                );
+
+                // Now create coordinates handler with the same final minY/maxY and final plot sizes
+                LineChartCoordinatesHandler = new LineChartCoordinatesHandler(minX, maxX, minY, maxY, PlotWidth, MarginLeft, MarginTop, PlotHeight, ParsingCulture);
+                LineChartXHandler = new LineChartXHandler(AxisGap, NeedsRotation, Parameters.RotationAngleXLabel, PlotWidth, maxX, MarginTop, MarginLeft, ExtraBottomForRotatedLabels, Parameters.Height, Data.Data, Data.XLabels, ChartData, LineChartCoordinatesHandler, Parameters.ShowXLines, ParsingCulture);
                 LineChartMarkupHandler = new LineChartMarkupHandler(Parameters.FormatterLabelPopup, Parameters.LegendLabel);
 
-                // ====== Procesamiento caro en paralelo ======
+                Console.WriteLine($"[DEBUG] PlotWidth={PlotWidth}, PlotHeight={PlotHeight}, MarginBottom={MarginBottom}, ExtraBottomForRotatedLabels={ExtraBottomForRotatedLabels}, minY={minY}, maxY={maxY}");
+
                 await Task.WhenAll(
                     Task.Run(() =>
                     {
+                        LabelsY = LineChartYHandler.GetYLabels();
+
+                        // Read possibly adjusted min/max from the Y handler (handler can refine ticks and adjusted range)
+                        minY = LineChartYHandler.MinY;
+                        maxY = LineChartYHandler.MaxY;
                         foreach (LineSeries serie in ChartData)
                         {
                             serie.PointsString = LineChartCoordinatesHandler.GetPoints(serie.Values);
@@ -260,9 +289,9 @@ public partial class LineChartComponent
                         else
                             GlobalMinY = null;
                     }),
-                    Task.Run(() => LabelsX = LineChartXHandler.GetXLabels()),
-                    Task.Run(() => LabelsY = LineChartYHandler.GetYLabels())
+                    Task.Run(() => LabelsX = LineChartXHandler.GetXLabels())
                 );
+
                 IsLoading = false;
                 if (OnLoading.HasDelegate)
                     await OnLoading.InvokeAsync(IsLoading);
