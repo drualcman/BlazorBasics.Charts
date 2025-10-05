@@ -84,217 +84,218 @@ public partial class LineChartComponent
                 if (OnLoading.HasDelegate)
                     await OnLoading.InvokeAsync(IsLoading);
                 await Task.Yield();
-
-                ConcurrentBag<double> allYValuesConcurrent = new ConcurrentBag<double>();
-                ConcurrentBag<LineSeries> chartDataConcurrent = new ConcurrentBag<LineSeries>();
-
-                int maxValuesCount = Data.Data
-                    .Select(d => d.Values.Count())
-                    .DefaultIfEmpty(0)
-                    .Max();
-
-                double minX = 1;
-                double maxX = maxValuesCount;
-
-                await Task.Run(() =>
+                if (Data is not null)
                 {
+                    ConcurrentBag<double> allYValuesConcurrent = new ConcurrentBag<double>();
+                    ConcurrentBag<LineSeries> chartDataConcurrent = new ConcurrentBag<LineSeries>();
 
-                    Parallel.ForEach(Data.Data, input =>
+                    int maxValuesCount = Data.Data
+                        .Select(d => d.Values.Count())
+                        .DefaultIfEmpty(0)
+                        .Max();
+
+                    double minX = 1;
+                    double maxX = maxValuesCount;
+
+                    await Task.Run(() =>
                     {
-                        List<ChartPoint> points = new List<ChartPoint>();
-                        int originalCount = input.Values.Count();
-                        List<string> valueList = input.Values.ToList();
 
-                        for (int j = 0; j < maxValuesCount; j++)
+                        Parallel.ForEach(Data.Data, input =>
                         {
-                            double x = j + 1;
-                            double yFallback = j + 1;
-                            double y = j < originalCount
-                                ? double.TryParse(valueList[j], NumberStyles.Any, ParsingCulture, out double value) ? value : yFallback
-                                : 0;
-                            allYValuesConcurrent.Add(y);
-                            string label = j < originalCount ? valueList[j] : "0";
-                            points.Add(new ChartPoint(x, y, label));
-                        }
+                            List<ChartPoint> points = new List<ChartPoint>();
+                            int originalCount = input.Values.Count();
+                            List<string> valueList = input.Values.ToList();
 
-                        List<ChartPoint> reducedPoints = ReduceResolution(points, Parameters.MaxPointPerLine);
-                        (ChartPoint min, ChartPoint max) = GetMinMax(reducedPoints);
+                            for (int j = 0; j < maxValuesCount; j++)
+                            {
+                                double x = j + 1;
+                                double yFallback = j + 1;
+                                double y = j < originalCount
+                                    ? double.TryParse(valueList[j], NumberStyles.Any, ParsingCulture, out double value) ? value : yFallback
+                                    : 0;
+                                allYValuesConcurrent.Add(y);
+                                string label = j < originalCount ? valueList[j] : "0";
+                                points.Add(new ChartPoint(x, y, label));
+                            }
 
-                        chartDataConcurrent.Add(new LineSeries(
-                            input.Name,
-                            string.IsNullOrEmpty(input.Color) ? "" : input.Color,
-                            reducedPoints,
-                            min,
-                            max
-                        ));
+                            List<ChartPoint> reducedPoints = ReduceResolution(points, Parameters.MaxPointPerLine);
+                            (ChartPoint min, ChartPoint max) = GetMinMax(reducedPoints);
+
+                            chartDataConcurrent.Add(new LineSeries(
+                                input.Name,
+                                string.IsNullOrEmpty(input.Color) ? "" : input.Color,
+                                reducedPoints,
+                                min,
+                                max
+                            ));
+                        });
                     });
-                });
 
-                ChartData = chartDataConcurrent.ToList();
-                List<double> allYValues = allYValuesConcurrent.ToList();
+                    ChartData = chartDataConcurrent.ToList();
+                    List<double> allYValues = allYValuesConcurrent.ToList();
 
-                if (Data.YLabels is not null && Data.YLabels.Any())
-                {
-                    string longestLabel = Data.YLabels.OrderByDescending(label => label.Length).FirstOrDefault();
-                    double fontWidth = 6.5;
-                    MaxYLabelWidth = (int)(longestLabel.Length * fontWidth) + 10;
-                }
-                else
-                {
-                    MaxYLabelWidth = 30;
-                }
-
-                // Compute raw min/max and pad
-                double minY = allYValues.Count > 0 ? allYValues.Min() : 0;
-                double maxY = allYValues.Count > 0 ? allYValues.Max() : 1;
-                double yRange = maxY - minY;
-
-                if (yRange == 0)
-                {
-                    yRange = Math.Abs(maxY) * 0.1;
-                    if (yRange == 0)
+                    if (Data.YLabels is not null && Data.YLabels.Any())
                     {
-                        yRange = 1;
+                        string longestLabel = Data.YLabels.OrderByDescending(label => label.Length).FirstOrDefault();
+                        double fontWidth = 6.5;
+                        MaxYLabelWidth = (int)(longestLabel.Length * fontWidth) + 10;
+                    }
+                    else
+                    {
+                        MaxYLabelWidth = 30;
                     }
 
-                    maxY += yRange / 2;
-                    minY -= yRange / 2;
-                }
-                else
-                {
-                    double yPadding = yRange * AxisYPaddingRatio;
-                    maxY += yPadding;
-                    minY -= yPadding;
-                }
+                    // Compute raw min/max and pad
+                    double minY = allYValues.Count > 0 ? allYValues.Min() : 0;
+                    double maxY = allYValues.Count > 0 ? allYValues.Max() : 1;
+                    double yRange = maxY - minY;
 
-                double xPadding = (maxX - minX) * AxisXPaddingRatio;
-                maxX += xPadding;
-                minX -= xPadding;
-
-                // Round to whole numbers for initial range (handler can refine)
-                minY = Math.Floor(minY);
-                maxY = Math.Ceiling(maxY);
-
-                // --- IMPORTANT: compute X-label rotation and ExtraBottomForRotatedLabels BEFORE creating YHandler
-                if (Data.XLabels is not null && Data.XLabels.Any())
-                {
-                    int estimatedWidth = Data.XLabels.Max(label => label.Length) * 7;
-                    int totalLabels = Data.XLabels.Count();
-                    double spacing = totalLabels > 1 ? PlotWidth / (totalLabels - 1) : PlotWidth;
-                    NeedsRotation = Parameters.RotatedXLabels || estimatedWidth > spacing;
-
-                    if (NeedsRotation)
+                    if (yRange == 0)
                     {
-                        double angleRad = ChartMathHelpers.CalculateRadious(Parameters.RotationAngleXLabel);
-                        int fontSize = 12;
-                        double rotatedHeight = estimatedWidth * Math.Sin(angleRad) + fontSize * Math.Cos(angleRad);
-                        ExtraBottomForRotatedLabels = (int)Math.Ceiling(rotatedHeight) + AxisGap * 2;
+                        yRange = Math.Abs(maxY) * 0.1;
+                        if (yRange == 0)
+                        {
+                            yRange = 1;
+                        }
+
+                        maxY += yRange / 2;
+                        minY -= yRange / 2;
+                    }
+                    else
+                    {
+                        double yPadding = yRange * AxisYPaddingRatio;
+                        maxY += yPadding;
+                        minY -= yPadding;
+                    }
+
+                    double xPadding = (maxX - minX) * AxisXPaddingRatio;
+                    maxX += xPadding;
+                    minX -= xPadding;
+
+                    // Round to whole numbers for initial range (handler can refine)
+                    minY = Math.Floor(minY);
+                    maxY = Math.Ceiling(maxY);
+
+                    // --- IMPORTANT: compute X-label rotation and ExtraBottomForRotatedLabels BEFORE creating YHandler
+                    if (Data.XLabels is not null && Data.XLabels.Any())
+                    {
+                        int estimatedWidth = Data.XLabels.Max(label => label.Length) * 7;
+                        int totalLabels = Data.XLabels.Count();
+                        double spacing = totalLabels > 1 ? PlotWidth / (totalLabels - 1) : PlotWidth;
+                        NeedsRotation = Parameters.RotatedXLabels || estimatedWidth > spacing;
+
+                        if (NeedsRotation)
+                        {
+                            double angleRad = ChartMathHelpers.CalculateRadious(Parameters.RotationAngleXLabel);
+                            int fontSize = 12;
+                            double rotatedHeight = estimatedWidth * Math.Sin(angleRad) + fontSize * Math.Cos(angleRad);
+                            ExtraBottomForRotatedLabels = (int)Math.Ceiling(rotatedHeight) + AxisGap * 2;
+                        }
+                        else
+                        {
+                            ExtraBottomForRotatedLabels = AxisGap * 3;
+                        }
                     }
                     else
                     {
                         ExtraBottomForRotatedLabels = AxisGap * 3;
                     }
-                }
-                else
-                {
-                    ExtraBottomForRotatedLabels = AxisGap * 3;
-                }
 
-                // Account for percent under zero (works with the final PlotHeight that uses ExtraBottomForRotatedLabels)
-                double percentUnderZero = 0;
-                if (minY < 0)
-                {
-                    percentUnderZero = Math.Abs(minY) / (maxY - minY);
-                }
-                int extraPixels = (int)(percentUnderZero * PlotHeight);
-                ExtraBottomForRotatedLabels += extraPixels;
-
-                minY = allYValues.Any() ? allYValues.Min() : 0.0;
-                maxY = allYValues.Any() ? allYValues.Max() : 1.0;
-
-                // Now create Y handler using the final MarginBottom (ExtraBottomForRotatedLabels)
-                LineChartYHandler = new LineChartYHandler(
-                    AxisGap,
-                    maxY,
-                    minY,
-                    MarginTop,
-                    MarginRight,
-                    MarginLeft,
-                    ExtraBottomForRotatedLabels,
-                    Parameters.Width,
-                    Parameters.Height,
-                    Parameters.StepsY,
-                    Data.YLabels,
-                    Parameters.ShowYLines,
-                    ParsingCulture
-                );
-
-                // Now create coordinates handler with the same final minY/maxY and final plot sizes
-                LineChartCoordinatesHandler = new LineChartCoordinatesHandler(minX, maxX, minY, maxY, PlotWidth, MarginLeft, MarginTop, PlotHeight, ParsingCulture);
-                LineChartXHandler = new LineChartXHandler(AxisGap, NeedsRotation, Parameters.RotationAngleXLabel, PlotWidth, maxX, MarginTop, MarginLeft, ExtraBottomForRotatedLabels, Parameters.Height, Data.Data, Data.XLabels, ChartData, LineChartCoordinatesHandler, Parameters.ShowXLines, ParsingCulture);
-                LineChartMarkupHandler = new LineChartMarkupHandler(Parameters.FormatterLabelPopup, Parameters.LegendLabel);
-
-                Console.WriteLine($"[DEBUG] PlotWidth={PlotWidth}, PlotHeight={PlotHeight}, MarginBottom={MarginBottom}, ExtraBottomForRotatedLabels={ExtraBottomForRotatedLabels}, minY={minY}, maxY={maxY}");
-
-                await Task.WhenAll(
-                    Task.Run(() =>
+                    // Account for percent under zero (works with the final PlotHeight that uses ExtraBottomForRotatedLabels)
+                    double percentUnderZero = 0;
+                    if (minY < 0)
                     {
-                        LabelsY = LineChartYHandler.GetYLabels();
+                        percentUnderZero = Math.Abs(minY) / (maxY - minY);
+                    }
+                    int extraPixels = (int)(percentUnderZero * PlotHeight);
+                    ExtraBottomForRotatedLabels += extraPixels;
 
-                        // Read possibly adjusted min/max from the Y handler (handler can refine ticks and adjusted range)
-                        minY = LineChartYHandler.MinY;
-                        maxY = LineChartYHandler.MaxY;
-                        foreach (LineSeries serie in ChartData)
+                    minY = allYValues.Any() ? allYValues.Min() : 0.0;
+                    maxY = allYValues.Any() ? allYValues.Max() : 1.0;
+
+                    // Now create Y handler using the final MarginBottom (ExtraBottomForRotatedLabels)
+                    LineChartYHandler = new LineChartYHandler(
+                        AxisGap,
+                        maxY,
+                        minY,
+                        MarginTop,
+                        MarginRight,
+                        MarginLeft,
+                        ExtraBottomForRotatedLabels,
+                        Parameters.Width,
+                        Parameters.Height,
+                        Parameters.StepsY,
+                        Data.YLabels,
+                        Parameters.ShowYLines,
+                        ParsingCulture
+                    );
+
+                    // Now create coordinates handler with the same final minY/maxY and final plot sizes
+                    LineChartCoordinatesHandler = new LineChartCoordinatesHandler(minX, maxX, minY, maxY, PlotWidth, MarginLeft, MarginTop, PlotHeight, ParsingCulture);
+                    LineChartXHandler = new LineChartXHandler(AxisGap, NeedsRotation, Parameters.RotationAngleXLabel, PlotWidth, maxX, MarginTop, MarginLeft, ExtraBottomForRotatedLabels, Parameters.Height, Data.Data, Data.XLabels, ChartData, LineChartCoordinatesHandler, Parameters.ShowXLines, ParsingCulture);
+                    LineChartMarkupHandler = new LineChartMarkupHandler(Parameters.FormatterLabelPopup, Parameters.LegendLabel);
+
+                    Console.WriteLine($"[DEBUG] PlotWidth={PlotWidth}, PlotHeight={PlotHeight}, MarginBottom={MarginBottom}, ExtraBottomForRotatedLabels={ExtraBottomForRotatedLabels}, minY={minY}, maxY={maxY}");
+
+                    await Task.WhenAll(
+                        Task.Run(() =>
                         {
-                            serie.PointsString = LineChartCoordinatesHandler.GetPoints(serie.Values);
-                        }
-                    }),
-                    Task.Run(() =>
-                    {
-                        if (Parameters.PointOptions.VisibleMaxPointLine)
-                        {
-                            ChartPoint globalMaxPoint = null;
+                            LabelsY = LineChartYHandler.GetYLabels();
+
+                            // Read possibly adjusted min/max from the Y handler (handler can refine ticks and adjusted range)
+                            minY = LineChartYHandler.MinY;
+                            maxY = LineChartYHandler.MaxY;
                             foreach (LineSeries serie in ChartData)
                             {
-                                if (serie.MaxPoint is not null)
-                                {
-                                    if (globalMaxPoint is null || serie.MaxPoint.Y > globalMaxPoint.Y)
-                                        globalMaxPoint = serie.MaxPoint;
-                                }
+                                serie.PointsString = LineChartCoordinatesHandler.GetPoints(serie.Values);
                             }
-
-                            if (globalMaxPoint is not null)
-                                GlobalMaxY = LineChartCoordinatesHandler.GetCoordinates(globalMaxPoint).Y;
-                        }
-                        else
-                            GlobalMaxY = null;
-                    }),
-                    Task.Run(() =>
-                    {
-                        if (Parameters.PointOptions.VisibleMinPointLine)
+                        }),
+                        Task.Run(() =>
                         {
-                            ChartPoint globalMinPoint = null;
-                            foreach (LineSeries serie in ChartData)
+                            if (Parameters.PointOptions.VisibleMaxPointLine)
                             {
-                                if (serie.MinPoint is not null)
+                                ChartPoint globalMaxPoint = null;
+                                foreach (LineSeries serie in ChartData)
                                 {
-                                    if (globalMinPoint is null || serie.MinPoint.Y < globalMinPoint.Y)
-                                        globalMinPoint = serie.MinPoint;
+                                    if (serie.MaxPoint is not null)
+                                    {
+                                        if (globalMaxPoint is null || serie.MaxPoint.Y > globalMaxPoint.Y)
+                                            globalMaxPoint = serie.MaxPoint;
+                                    }
                                 }
+
+                                if (globalMaxPoint is not null)
+                                    GlobalMaxY = LineChartCoordinatesHandler.GetCoordinates(globalMaxPoint).Y;
                             }
+                            else
+                                GlobalMaxY = null;
+                        }),
+                        Task.Run(() =>
+                        {
+                            if (Parameters.PointOptions.VisibleMinPointLine)
+                            {
+                                ChartPoint globalMinPoint = null;
+                                foreach (LineSeries serie in ChartData)
+                                {
+                                    if (serie.MinPoint is not null)
+                                    {
+                                        if (globalMinPoint is null || serie.MinPoint.Y < globalMinPoint.Y)
+                                            globalMinPoint = serie.MinPoint;
+                                    }
+                                }
 
-                            if (globalMinPoint is not null)
-                                GlobalMinY = LineChartCoordinatesHandler.GetCoordinates(globalMinPoint).Y;
-                        }
-                        else
-                            GlobalMinY = null;
-                    }),
-                    Task.Run(() => LabelsX = LineChartXHandler.GetXLabels())
-                );
-
-                IsLoading = false;
-                if (OnLoading.HasDelegate)
-                    await OnLoading.InvokeAsync(IsLoading);
+                                if (globalMinPoint is not null)
+                                    GlobalMinY = LineChartCoordinatesHandler.GetCoordinates(globalMinPoint).Y;
+                            }
+                            else
+                                GlobalMinY = null;
+                        }),
+                        Task.Run(() => LabelsX = LineChartXHandler.GetXLabels())
+                    );
+                    IsLoading = false;
+                    if (OnLoading.HasDelegate)
+                        await OnLoading.InvokeAsync(IsLoading);
+                }
             }
         }
     }
