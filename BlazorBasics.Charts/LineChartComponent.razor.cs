@@ -40,7 +40,7 @@ public partial class LineChartComponent
     LineChartMarkupHandler LineChartMarkupHandler;
     IEnumerable<MarkupString> LabelsX = [];
     IEnumerable<MarkupString> LabelsY = [];
-    LineChartData _data;
+    LineChartData _data = new([]);
     bool IsLoading;
     double? GlobalMinY;
     double? GlobalMaxY;
