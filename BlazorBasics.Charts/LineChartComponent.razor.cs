@@ -362,11 +362,8 @@ public partial class LineChartComponent
         return key;
     }
 
-    string GetCircleSerieKey(LineSeries serie, int p)
-    {
-        string key = $"C{p}_{serie.Name}|{Parameters.Width}x{Parameters.Height}";
-        return key;
-    }
+    string GetCircleSerieKey(LineSeries serie, int p) =>
+        $"C{p}_{serie.Name}|{Parameters.Width}x{Parameters.Height}";
 
     private List<ChartPoint> ReduceResolution(List<ChartPoint> points, int maxPoints)
     {
@@ -387,4 +384,16 @@ public partial class LineChartComponent
 
         return reduced;
     }
+
+    private string GetPopupPositionStyle()
+    {
+        double x = SelectedPoint.X + MarginLeft;
+        double y = SelectedPoint.Y + MarginTop;
+        if (x > Parameters.Width - 50)
+            x -= 120;
+        if (y < 30)
+            y += 20;
+        return $"top: {y}px; left: {x}px;";
+    }
+
 }
