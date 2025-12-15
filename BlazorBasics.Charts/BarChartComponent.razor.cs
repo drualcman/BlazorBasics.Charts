@@ -19,7 +19,8 @@ public partial class BarChartComponent
     {
         double maxQuantity = Topics.Any() ? Topics.Max(t => t.Value) : 0;
 
-        double totalWidth = Parameters.Dimension;
+        double logicalWidth = Parameters.MaxWidth;
+        double totalWidth = logicalWidth;
         double thickness = Parameters.Thickness;
         double gap = Parameters.Gap;
 
@@ -41,8 +42,14 @@ public partial class BarChartComponent
 
         StringBuilder svg = new StringBuilder();
 
+
+        string svgWidth = Parameters.Dimension.ToString(CultureInfo.InvariantCulture) + "%";
+
         svg.AppendLine(
-            $"<svg width=\"{totalWidth}\" height=\"{totalHeight}\" viewBox=\"0 0 {totalWidth} {totalHeight}\" xmlns=\"http://www.w3.org/2000/svg\">"
+            $"<svg width=\"{svgWidth}\" height=\"{totalHeight}\" " +
+            $"viewBox=\"0 0 {logicalWidth} {totalHeight}\" " +
+            $"preserveAspectRatio=\"xMinYMin meet\" " +
+            $"xmlns=\"http://www.w3.org/2000/svg\">"
         );
 
         double y = 0;
