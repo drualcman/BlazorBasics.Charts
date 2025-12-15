@@ -51,8 +51,8 @@ internal class LineChartXHandler
         foreach ((int x, int y, int rotatedY, int estimatedWidth, string label) in positions)
         {
             string textSvg = (i > 0 && i < labelCount) && NeedsRotation
-                ? SvgHelper.CreateRotatedSvgText(label, x, rotatedY, RotationAngleXLabel, estimatedWidth)
-                : SvgHelper.CreateSvgText(label, x, y, "middle");
+                ? SvgHelper.RotatedText(label, x, rotatedY, RotationAngleXLabel, estimatedWidth)
+                : SvgHelper.Text(label, x, y, "middle");
 
             textLabels.Add(textSvg);
             i++;
@@ -97,7 +97,7 @@ internal class LineChartXHandler
             double rotatedHeight = estimatedWidth * Math.Sin(angleRad) + fontSize * Math.Cos(angleRad);
             int rotatedY = yBase + AxisGap + (int)Math.Ceiling(rotatedHeight);
             positions.Add((xLabel, yLabel, rotatedY, estimatedWidth, label));
-            string gridLine = ShowLines ? SvgHelper.CreateSvgLine(xLabel, MarginTop - (int)(AxisGap * 1.5), xLabel, Height - MarginBottom + AxisGap) : string.Empty;
+            string gridLine = ShowLines ? SvgHelper.Line(xLabel, MarginTop - (int)(AxisGap * 1.5), xLabel, Height - MarginBottom + AxisGap) : string.Empty;
             gridLines.Add(gridLine);
         }
     }

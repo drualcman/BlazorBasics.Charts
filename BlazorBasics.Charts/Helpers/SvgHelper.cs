@@ -1,18 +1,23 @@
 ﻿namespace BlazorBasics.Charts.Helpers;
+
 internal static class SvgHelper
 {
-
-    internal static string CreateSvgText(string text, int x, int y, string anchor = "middle")
+    internal static string Text(string text, double x, double y, string anchor = "middle", int fontSize = 10)
     {
-        return $"<text x=\"{x}\" y=\"{y}\" text-anchor=\"{anchor}\" font-size=\"10\">{text}</text>";
+        return $"<text x=\"{x}\" y=\"{y}\" text-anchor=\"{anchor}\" font-size=\"{fontSize}\">{text}</text>";
     }
 
-    internal static string CreateSvgLine(int x1, int y1, int x2, int y2)
+    internal static string Line(int x1, int y1, int x2, int y2)
     {
         return $"<line x1=\"{x1}\" y1=\"{y1}\" x2=\"{x2}\" y2=\"{y2}\" class=\"grid-line\" />";
     }
 
-    internal static string CreateRotatedSvgText(string text, int x, int y, double angleDegrees, int estimatedWidth)
+    internal static string Rect(double x, double y, double width, double thickness, string color)
+    {
+        return $"<rect x=\"{x}\" y=\"{y}\" width=\"{width}\" height=\"{thickness}\" fill=\"{color}\" />";
+    }
+
+    internal static string RotatedText(string text, int x, int y, double angleDegrees, int estimatedWidth)
     {
         double angleRadians = ChartMathHelpers.CalculateRadious(angleDegrees);
 

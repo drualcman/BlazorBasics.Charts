@@ -76,8 +76,8 @@ internal class LineChartYHandler
                 string label = customLabels[index];
                 double percent = count <= 1 ? 0.0 : (double)index / (count - 1);
                 int y = plotBottom - (int)Math.Round(percent * usableHeight);
-                string textSvg = SvgHelper.CreateSvgText(label, x, y + 4, "end");
-                string gridLine = ShowLines ? SvgHelper.CreateSvgLine(MarginLeft, y, Width - MarginRight + AxisGap, y) : string.Empty;
+                string textSvg = SvgHelper.Text(label, x, y + 4, "end");
+                string gridLine = ShowLines ? SvgHelper.Line(MarginLeft, y, Width - MarginRight + AxisGap, y) : string.Empty;
                 positions.Add((x, y, textSvg, gridLine));
 
                 double yValue = double.TryParse(customLabels[index], NumberStyles.Any, ParsingCulture, out double value) ? value : i;
@@ -186,8 +186,8 @@ internal class LineChartYHandler
 
                 // Format label with up to two decimals, culture-invariant
                 string label = yValue.ToString("0.##", ParsingCulture);
-                string textSvg = SvgHelper.CreateSvgText(label, x, y + 4, "end");
-                string gridLine = ShowLines ? SvgHelper.CreateSvgLine(MarginLeft, y, Width - MarginRight + AxisGap, y) : string.Empty;
+                string textSvg = SvgHelper.Text(label, x, y + 4, "end");
+                string gridLine = ShowLines ? SvgHelper.Line(MarginLeft, y, Width - MarginRight + AxisGap, y) : string.Empty;
                 positions.Add((x, y, textSvg, gridLine));
             }
         }

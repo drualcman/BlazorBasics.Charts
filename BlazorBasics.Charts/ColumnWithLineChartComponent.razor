@@ -43,7 +43,7 @@
         <svg class="chart-svg" viewBox="@ViewBox" preserveAspectRatio="xMidYMid meet">
             <!-- Eje X -->
             @(
-                new MarkupString(SvgHelper.CreateSvgLine(
+                new MarkupString(SvgHelper.Line(
                 Margin - Parameters.Spacing,
                 ChartHeight + Margin + 5,
                 CalculatedWidth,
@@ -80,7 +80,7 @@
                             fill="@BigTotalPoints[i].Color"
                             @onclick="() => OnColumnClick(item)" @onclick:stopPropagation />
                     @(
-                        new MarkupString(SvgHelper.CreateSvgText(
+                        new MarkupString(SvgHelper.Text(
                         Parameters.BigTotalValueLabelFormatter?.Invoke(item) ?? BigTotalPercentageLabels[i].Label,
                         BigTotalPercentageLabels[i].X,
                         BigTotalPercentageLabels[i].Y,
@@ -99,7 +99,7 @@
                     if(IsShowingPrimaryValues || PrimaryPoints[i] == SelectedPoint)
                     {
                         @(
-                            new MarkupString(SvgHelper.CreateSvgText(
+                            new MarkupString(SvgHelper.Text(
                             Parameters.PrimaryValueLabelFormatter?.Invoke(item) ?? PrimaryPercentageLabels[i].Label,
                             PrimaryPercentageLabels[i].X,
                             PrimaryPercentageLabels[i].Y,
@@ -119,7 +119,7 @@
                     if(IsShowingSecondValues || SecondaryPoints[i] == SelectedPoint)
                     {
                         @(
-                            new MarkupString(SvgHelper.CreateSvgText(
+                            new MarkupString(SvgHelper.Text(
                             Parameters.SecondaryValueLabelFormatter?.Invoke(item) ?? SecondaryPercentageLabels[i].Label,
                             SecondaryPercentageLabels[i].X,
                             SecondaryPercentageLabels[i].Y,
@@ -128,7 +128,7 @@
                     }
                 }
 
-                @(new MarkupString(SvgHelper.CreateSvgText(
+                @(new MarkupString(SvgHelper.Text(
                     Parameters.BottomLabelFormatter?.Invoke(item) ?? item.Label,
                     BottomLabels[i].X,
                     BottomLabels[i].Y,
