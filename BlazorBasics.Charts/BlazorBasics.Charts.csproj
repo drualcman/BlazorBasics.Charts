@@ -21,7 +21,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Include="BarChartComponent.razor.css" />
 		<EmbeddedResource Include="ColumnWithLineChartComponent.razor.css" />
 		<EmbeddedResource Include="ColumnChartComponent.razor.css" />
 		<EmbeddedResource Include="LineChartComponent.razor.css" />
@@ -55,7 +54,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Components\" />
 		<Folder Include="wwwroot\" />
 	</ItemGroup>
 
