@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+		<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.2.17</Version>
+		<Version>1.2.18</Version>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Authors>Sergi Ortiz Gomez</Authors>
@@ -16,7 +16,7 @@
 		<PackageTags>charts;pie;bars;lines;ring;percentage;blazor;blazor server; blazor webassembly</PackageTags>
 		<PackageId>BlazorBasics.Charts</PackageId>
 		<Product>BlazorBasics.Charts</Product>
-		<PackageReleaseNotes>Fixed posible null reference when render LineChartComponent.</PackageReleaseNotes>
+		<PackageReleaseNotes>Target NET10. Update dependencies.</PackageReleaseNotes>
 		<PackageProjectUrl>https://github.com/drualcman/BlazorBasics.Charts</PackageProjectUrl>
 	</PropertyGroup>
 
@@ -50,7 +50,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.21" Condition="'$(TargetFramework)' == 'net8.0'" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.10" Condition="'$(TargetFramework)' == 'net9.0'" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.11" Condition="'$(TargetFramework)' == 'net9.0'" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.0" Condition="'$(TargetFramework)' == 'net10.0'" />
 	</ItemGroup>
 
 	<ItemGroup>

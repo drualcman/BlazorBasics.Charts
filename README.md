@@ -457,3 +457,24 @@ Then you can do
     };
 }
 ```
+
+# Contributing
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+- Fork the repository
+- Create your feature branch (git checkout -b feature/AmazingFeature)
+- Commit your changes (git commit -m 'Add some AmazingFeature')
+- Push to the branch (git push origin feature/AmazingFeature)
+- Open a Pull Request
+
+# License
+This project is licensed under the MIT License.
+
+# Acknowledgments
+- Built with love for the Blazor community
+- Inspired by the need for simple, effective dashboard components
+- Thanks to all contributors and users
+
+# Made with love by DrUalcman
+
+If you find this component useful, please consider giving it a star on GitHub!
