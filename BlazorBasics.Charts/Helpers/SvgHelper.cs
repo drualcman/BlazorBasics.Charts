@@ -24,10 +24,14 @@ internal static class SvgHelper
         return SecurityElement.Escape(text) ?? text;
     }
 
-    internal static string Text(string text, double x, double y, string anchor = "middle", int fontSize = 10)
+    internal static string Text(string text, double x, double y, string anchor = "middle", int fontSize = 10,
+        string colour = null)
     {
-        return $"<text x=\"{Format(x)}\" y=\"{Format(y)}\" text-anchor=\"{anchor}\" font-size=\"{fontSize}\">{Escape(text)}</text>";
+        return $"<text x=\"{Format(x)}\" y=\"{Format(y)}\" text-anchor=\"{anchor}\" font-size=\"{fontSize}\"{Fill(colour)}>{Escape(text)}</text>";
     }
+
+    private static string Fill(string colour) =>
+        string.IsNullOrWhiteSpace(colour) ? string.Empty : $" fill=\"{colour}\"";
 
     internal static string Line(int x1, int y1, int x2, int y2)
     {
@@ -62,11 +66,11 @@ internal static class SvgHelper
     /// exactly where the baseline starts or ends, depending on the anchor.
     /// </summary>
     internal static string RotatedTextAt(string text, double x, double y, double angleDegrees,
-        int fontSize, string anchor)
+        int fontSize, string anchor, string colour = null)
     {
         return $"<text x=\"{Format(x)}\" y=\"{Format(y)}\" text-anchor=\"{anchor}\" " +
                $"transform=\"rotate({Format(angleDegrees)},{Format(x)},{Format(y)})\" " +
-               $"font-size=\"{fontSize}\">{Escape(text)}</text>";
+               $"font-size=\"{fontSize}\"{Fill(colour)}>{Escape(text)}</text>";
     }
 
     internal static string RotatedText(string text, int x, int y, double angleDegrees, int estimatedWidth) =>

@@ -23,6 +23,7 @@
 	<ItemGroup>
 		<EmbeddedResource Include="ColumnWithLineChartComponent.razor.css" />
 		<EmbeddedResource Include="ColumnChartComponent.razor.css" />
+		<EmbeddedResource Include="StackedBarChartComponent.razor.css" />
 		<EmbeddedResource Include="LineChartComponent.razor.css" />
 		<EmbeddedResource Include="PieChartComponent.razor.css" />
 		<EmbeddedResource Include="RingPercentageComponent.razor.css" />
