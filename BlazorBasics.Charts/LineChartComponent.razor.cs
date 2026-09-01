@@ -16,6 +16,18 @@ public partial class LineChartComponent
     [Parameter] public CultureInfo ParsingCulture { get; set; } = CultureInfo.InvariantCulture;
     [Parameter] public EventCallback<bool> OnLoading { get; set; } = new();
 
+    /// <summary>
+    /// Raised with the point that was clicked, whichever of the dots it was. The chart still opens
+    /// or closes its own popup on top of this.
+    /// </summary>
+    [Parameter] public EventCallback<LineChartPoint> OnPointClick { get; set; }
+
+    /// <summary>
+    /// Raised with the series whose entry in the legend was clicked, carrying its values. The
+    /// chart still isolates or restores that series on top of this.
+    /// </summary>
+    [Parameter] public EventCallback<LineData> OnLegendClick { get; set; }
+
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object> Attributes { get; set; }
 
@@ -327,7 +339,7 @@ public partial class LineChartComponent
         return (min, max);
     }
 
-    void OnPointClick(ChartPoint selection)
+    async Task SelectPoint(LineSeries serie, ChartPoint point, ChartPoint selection)
     {
         if (SelectedPoint != null &&
            SelectedPoint.X == selection.X &&
@@ -339,15 +351,38 @@ public partial class LineChartComponent
         {
             SelectedPoint = selection;
         }
+
+        if (OnPointClick.HasDelegate)
+            await OnPointClick.InvokeAsync(ClickedPoint(serie, point));
     }
 
-    void OnSelectLegend(LineSeries serie)
+    /// <summary>
+    /// Turns the point the chart drew back into what the consumer handed over. The X of a point is
+    /// its position in the series counting from one, which is what gives the index back even for
+    /// the highest and the lowest point of a series.
+    /// </summary>
+    LineChartPoint ClickedPoint(LineSeries serie, ChartPoint point)
+    {
+        int index = (int)point.X - 1;
+        List<string> labels = Data?.XLabels?.ToList() ?? [];
+        string label = index >= 0 && index < labels.Count ? labels[index] : null;
+
+        return new LineChartPoint(serie.Name, serie.Color, index, point.Value, label);
+    }
+
+    async Task OnSelectLegend(LineSeries serie)
     {
         SelectedPoint = null;
         if (serie.Equals(SelectedSerie))
             SelectedSerie = null;
         else
             SelectedSerie = serie;
+
+        if (OnLegendClick.HasDelegate)
+        {
+            await OnLegendClick.InvokeAsync(new LineData(
+                serie.Name, serie.Color, [.. serie.Values.Select(point => point.Value)]));
+        }
     }
 
     void CancelSelections()

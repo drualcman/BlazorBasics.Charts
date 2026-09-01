@@ -10,6 +10,11 @@ public partial class StackedBarChartComponent
     [Parameter] public IEnumerable<ChartSegment> Topics { get; set; }
     [Parameter] public StackedBarChartParams Parameters { get; set; } = new();
 
+    /// <summary>
+    /// Raised with the value behind the segment that was clicked, or behind its label.
+    /// </summary>
+    [Parameter] public EventCallback<ChartSegment> OnClick { get; set; }
+
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object> Attributes { get; set; }
 
@@ -20,23 +25,34 @@ public partial class StackedBarChartComponent
     private const double LabelPadding = 8;
     private const double VerticalLabelAngle = -90;
 
-    private MarkupString SvgMarkup = new();
     private string WrapperCss = "";
+    private List<ChartSegment> Segments = [];
+    private ChartLayout Layout = new();
 
     private bool IsVertical => Parameters.Orientation == StackedBarOrientation.Vertical;
 
     private string OrientationCss => IsVertical ? "is-vertical" : "is-horizontal";
 
+    private string ClickableStyle => OnClick.HasDelegate ? "cursor: pointer;" : null;
+
     protected override void OnParametersSet()
     {
         if (Attributes is not null && Attributes.TryGetValue("class", out object css))
             WrapperCss = css.ToString();
-        SvgMarkup = new MarkupString(GenerateSvg());
+        Segments = Topics is null ? [] : [.. Topics];
+        Layout = BuildLayout(Segments);
     }
 
-    public string GenerateSvg()
+    public string GenerateSvg() =>
+        SvgHelper.Document(BuildLayout(Topics is null ? [] : [.. Topics]));
+
+    private Task SegmentClick(int segmentIndex) =>
+        segmentIndex >= 0 && segmentIndex < Segments.Count && OnClick.HasDelegate
+            ? OnClick.InvokeAsync(Segments[segmentIndex])
+            : Task.CompletedTask;
+
+    private ChartLayout BuildLayout(List<ChartSegment> segments)
     {
-        List<ChartSegment> segments = Topics is null ? [] : [.. Topics];
         double total = TotalOf(segments);
 
         double length = Parameters.Length;
@@ -46,17 +62,14 @@ public partial class StackedBarChartComponent
         double barCrossStart = Parameters.LabelSide == StackedBarLabelSide.Before ? labelBand : 0;
         double crossSize = thickness + labelBand;
 
-        double totalWidth = IsVertical ? crossSize : length;
-        double totalHeight = IsVertical ? length : crossSize;
+        ChartLayout layout = new ChartLayout
+        {
+            Width = IsVertical ? crossSize : length,
+            Height = IsVertical ? length : crossSize,
+            PreserveAspectRatio = "xMidYMid meet"
+        };
 
-        StringBuilder svg = new StringBuilder();
-
-        svg.AppendLine(
-            $"<svg width=\"{Number(totalWidth)}\" height=\"{Number(totalHeight)}\" " +
-            $"viewBox=\"0 0 {Number(totalWidth)} {Number(totalHeight)}\" " +
-            $"preserveAspectRatio=\"xMidYMid meet\" xmlns=\"http://www.w3.org/2000/svg\">");
-
-        svg.AppendLine(BarRect(0, length, barCrossStart, thickness, Parameters.BackgroundColour));
+        AddBarRect(layout, 0, length, barCrossStart, thickness, Parameters.BackgroundColour, -1);
 
         double mainOffset = 0;
 
@@ -74,26 +87,24 @@ public partial class StackedBarChartComponent
             double share = total > 0 ? segment.Value / total : 0;
             double mainSize = length * share;
 
-            svg.AppendLine(BarRect(mainOffset, mainSize, barCrossStart, thickness, background));
+            AddBarRect(layout, mainOffset, mainSize, barCrossStart, thickness, background, index);
 
             if (share >= Parameters.MinimumLabelShare)
             {
-                svg.AppendLine(SegmentLabel(
-                    segment.Name, mainOffset, mainSize, barCrossStart, thickness, foreground));
+                AddSegmentLabel(layout, segment.Name, index, mainOffset, mainSize, barCrossStart,
+                    thickness, foreground);
             }
 
             if (Parameters.ShowValues && Parameters.LabelSide != StackedBarLabelSide.Inside)
             {
-                svg.AppendLine(SegmentValue(
-                    segment.Value, mainOffset, mainSize, barCrossStart, thickness, foreground));
+                AddSegmentValue(layout, segment.Value, index, mainOffset, mainSize, barCrossStart,
+                    thickness, foreground);
             }
 
             mainOffset += mainSize;
         }
 
-        svg.AppendLine("</svg>");
-
-        return svg.ToString();
+        return layout;
     }
 
     private double TotalOf(List<ChartSegment> segments)
@@ -124,21 +135,27 @@ public partial class StackedBarChartComponent
         return result;
     }
 
-    private string BarRect(double mainStart, double mainSize, double crossStart, double thickness,
-        string colour) =>
-        IsVertical
-            ? SvgHelper.Rect(crossStart, mainStart, thickness, mainSize, colour)
-            : SvgHelper.Rect(mainStart, crossStart, mainSize, thickness, colour);
+    private void AddBarRect(ChartLayout layout, double mainStart, double mainSize,
+        double crossStart, double thickness, string colour, int segmentIndex)
+    {
+        if (IsVertical)
+        {
+            layout.AddShape(crossStart, mainStart, thickness, mainSize, colour, segmentIndex);
+        }
+        else
+        {
+            layout.AddShape(mainStart, crossStart, mainSize, thickness, colour, segmentIndex);
+        }
+    }
 
-    private string SegmentLabel(string label, double mainStart, double mainSize, double crossStart,
-        double thickness, string foreground)
+    private void AddSegmentLabel(ChartLayout layout, string label, int index, double mainStart,
+        double mainSize, double crossStart, double thickness, string foreground)
     {
         int fontSize = Parameters.LabelFontSize;
         double ascent = fontSize * GlyphAscentFactor;
         double descent = fontSize * GlyphDescentFactor;
         bool inside = Parameters.LabelSide == StackedBarLabelSide.Inside;
         string colour = inside ? foreground : null;
-        string result;
 
         if (IsVertical)
         {
@@ -158,7 +175,7 @@ public partial class StackedBarChartComponent
 
             string anchor = Parameters.LabelSide == StackedBarLabelSide.Before ? "end" : "start";
 
-            result = SvgHelper.Text(label, baselineX, baselineY, anchor, fontSize, colour);
+            layout.AddText(label, baselineX, baselineY, anchor, fontSize, index, colour);
         }
         else
         {
@@ -182,26 +199,23 @@ public partial class StackedBarChartComponent
 
             string anchor = Parameters.LabelSide == StackedBarLabelSide.After ? "end" : "start";
 
-            result = SvgHelper.RotatedTextAt(
-                label, baselineX, baselineY, VerticalLabelAngle, fontSize, anchor, colour);
+            layout.AddText(label, baselineX, baselineY, anchor, fontSize, index, colour,
+                VerticalLabelAngle);
         }
-
-        return result;
     }
 
     /// <summary>
     /// Value written across the middle of its own segment, and only when the segment is long
     /// enough to hold it without spilling over the segments next to it.
     /// </summary>
-    private string SegmentValue(double value, double mainStart, double mainSize, double crossStart,
-        double thickness, string foreground)
+    private void AddSegmentValue(ChartLayout layout, double value, int index, double mainStart,
+        double mainSize, double crossStart, double thickness, string foreground)
     {
         int fontSize = Parameters.LabelFontSize;
         string text = value.ToString(CultureInfo.InvariantCulture);
         double textWidth = EstimatedTextWidth(text);
         double roomForTheTextWidth = IsVertical ? thickness : mainSize;
         double roomForTheTextHeight = IsVertical ? mainSize : thickness;
-        string result = string.Empty;
 
         if (roomForTheTextWidth >= textWidth + LabelPadding && roomForTheTextHeight >= fontSize)
         {
@@ -210,15 +224,10 @@ public partial class StackedBarChartComponent
             double x = IsVertical ? centreCross : centreMain;
             double y = (IsVertical ? centreMain : centreCross) + (fontSize * 0.35);
 
-            result = SvgHelper.Text(text, x, y, "middle", fontSize, foreground);
+            layout.AddText(text, x, y, "middle", fontSize, index, foreground);
         }
-
-        return result;
     }
 
     private double EstimatedTextWidth(string text) =>
         (text?.Length ?? 0) * Parameters.LabelFontSize * AverageCharacterWidthFactor;
-
-    private static string Number(double value) =>
-        value.ToString("0.####", CultureInfo.InvariantCulture);
 }

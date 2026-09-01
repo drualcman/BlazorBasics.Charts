@@ -16,6 +16,53 @@ internal static class SvgHelper
     }
 
     /// <summary>
+    /// Same formatting, for the markup the components render themselves. Razor writes numbers with
+    /// the culture of the thread, which in most of Europe would put a comma in the middle of every
+    /// coordinate and break the svg, so every number written into markup goes through here.
+    /// </summary>
+    internal static string Number(double value) => Format(value);
+
+    /// <summary>
+    /// Transform attribute of a label that is rotated, and nothing at all for one that is not, so
+    /// the attribute is left out of the markup instead of written empty.
+    /// </summary>
+    internal static string Rotation(ChartText text) =>
+        text.RotationAngle.HasValue
+            ? $"rotate({Format(text.RotationAngle.Value)},{Format(text.X)},{Format(text.Y)})"
+            : null;
+
+    /// <summary>
+    /// Writes the whole of a layout as an svg document.
+    /// </summary>
+    internal static string Document(ChartLayout layout)
+    {
+        StringBuilder svg = new StringBuilder();
+
+        svg.AppendLine(
+            $"<svg width=\"{layout.CssWidth ?? Format(layout.Width)}\" height=\"{Format(layout.Height)}\" " +
+            $"viewBox=\"0 0 {Format(layout.Width)} {Format(layout.Height)}\" " +
+            $"preserveAspectRatio=\"{layout.PreserveAspectRatio}\" " +
+            $"xmlns=\"http://www.w3.org/2000/svg\">");
+
+        foreach (ChartShape shape in layout.Shapes)
+        {
+            svg.AppendLine(Rect(shape.X, shape.Y, shape.Width, shape.Height, shape.Colour));
+        }
+
+        foreach (ChartText text in layout.Texts)
+        {
+            svg.AppendLine(text.RotationAngle.HasValue
+                ? RotatedTextAt(text.Content, text.X, text.Y, text.RotationAngle.Value,
+                    text.FontSize, text.Anchor, text.Colour)
+                : Text(text.Content, text.X, text.Y, text.Anchor, text.FontSize, text.Colour));
+        }
+
+        svg.AppendLine("</svg>");
+
+        return svg.ToString();
+    }
+
+    /// <summary>
     /// Escapes text to make it safe inside an SVG <text> element
     /// </summary>
     private static string Escape(string text)

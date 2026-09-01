@@ -5,10 +5,18 @@ public partial class BarChartComponent
     [Parameter] public IEnumerable<ChartSegment> Topics { get; set; }
     [Parameter] public ColumnsBarChartParams Parameters { get; set; } = new();
 
+    /// <summary>
+    /// Raised with the value behind whatever was clicked, be it the bar, the part of the row that
+    /// is still empty, or its label.
+    /// </summary>
+    [Parameter] public EventCallback<ChartSegment> OnClick { get; set; }
+
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object> Attributes { get; set; }
 
-    MarkupString SvgMarkup = new();
+    private string WrapperCss = "";
+    private List<ChartSegment> Segments = [];
+    private ChartLayout Layout = new();
 
     /// <summary>
     /// The bar chart has always closed every row with its label, so that stays the default here.
@@ -16,14 +24,27 @@ public partial class BarChartComponent
     private ColumnLabelPlacement LabelPlacement =>
         Parameters.LabelPlacement ?? ColumnLabelPlacement.Right;
 
+    private string ClickableStyle => OnClick.HasDelegate ? "cursor: pointer;" : null;
+
     protected override void OnParametersSet()
     {
-        SvgMarkup = new MarkupString(GenerateSvg());
+        if (Attributes is not null && Attributes.TryGetValue("class", out object css))
+            WrapperCss = css.ToString();
+        Segments = Topics is null ? [] : [.. Topics];
+        Layout = BuildLayout(Segments);
     }
 
-    public string GenerateSvg()
+    public string GenerateSvg() =>
+        SvgHelper.Document(BuildLayout(Topics is null ? [] : [.. Topics]));
+
+    private Task SegmentClick(int segmentIndex) =>
+        segmentIndex >= 0 && segmentIndex < Segments.Count && OnClick.HasDelegate
+            ? OnClick.InvokeAsync(Segments[segmentIndex])
+            : Task.CompletedTask;
+
+    private ChartLayout BuildLayout(List<ChartSegment> topics)
     {
-        double fillReference = FillReferenceValue();
+        double fillReference = FillReferenceValue(topics);
 
         double logicalWidth = Parameters.MaxWidth;
         double totalWidth = logicalWidth;
@@ -62,63 +83,43 @@ public partial class BarChartComponent
             barWidthTotal = totalWidth - labelWidth - (Parameters.ShowValues ? valueWidth : 0);
         }
 
-        double totalHeight = Topics.Count() * rowHeight;
-
-        StringBuilder svg = new StringBuilder();
-
-
-        string svgWidth = Parameters.Dimension.ToString(CultureInfo.InvariantCulture) + "%";
-
-        svg.AppendLine(
-            $"<svg width=\"{svgWidth}\" height=\"{totalHeight}\" " +
-            $"viewBox=\"0 0 {logicalWidth} {totalHeight}\" " +
-            $"preserveAspectRatio=\"xMinYMin meet\" " +
-            $"xmlns=\"http://www.w3.org/2000/svg\">"
-        );
+        ChartLayout layout = new ChartLayout
+        {
+            Width = logicalWidth,
+            Height = topics.Count * rowHeight,
+            CssWidth = Parameters.Dimension.ToString(CultureInfo.InvariantCulture) + "%",
+            PreserveAspectRatio = "xMinYMin meet"
+        };
 
         double y = 0;
         int colorIndex = 0;
 
-        foreach (ChartSegment topic in Topics)
+        for (int index = 0; index < topics.Count; index++)
         {
+            ChartSegment topic = topics[index];
+
             double percentage = fillReference > 0 ? topic.Value / fillReference : 0;
             double barWidth = barWidthTotal * percentage;
 
-            double barY = LabelPlacement == ColumnLabelPlacement.Top
-                ? y + labelLineHeight
-                : y;
+            double barY = LabelPlacement == ColumnLabelPlacement.Top ? y + labelLineHeight : y;
 
-            string color = string.IsNullOrWhiteSpace(topic.ChartColor)
+            string colour = string.IsNullOrWhiteSpace(topic.ChartColor)
                 ? Parameters.ChartColors[colorIndex].Background
                 : topic.ChartColor;
 
-            svg.AppendLine(
-                SvgHelper.Rect(barX, barY, barWidthTotal, thickness, Parameters.BackgroundColour)
-            );
-
-            svg.AppendLine(
-                SvgHelper.Rect(barX, barY, barWidth, thickness, color)
-            );
+            layout.AddShape(barX, barY, barWidthTotal, thickness, Parameters.BackgroundColour, index);
+            layout.AddShape(barX, barY, barWidth, thickness, colour, index);
 
             double textY = barY + thickness - 5;
 
             if (Parameters.ShowValues)
             {
-                double valueX = barX + barWidthTotal + innerPadding;
-                svg.AppendLine(
-                    SvgHelper.Text(
-                        topic.Value.ToString(CultureInfo.InvariantCulture),
-                        valueX,
-                        textY,
-                        "start",
-                        12
-                    )
-                );
+                layout.AddText(topic.Value.ToString(CultureInfo.InvariantCulture),
+                    barX + barWidthTotal + innerPadding, textY, "start", 12, index);
             }
 
-            svg.AppendLine(LabelMarkup(topic.Name, y, barY, textY, totalWidth, innerPadding,
-                labelWidth, thickness, labelFontSize));
-
+            AddLabel(layout, topic.Name, index, y, barY, textY, totalWidth, innerPadding,
+                labelWidth, thickness, labelFontSize);
 
             y += rowHeight;
 
@@ -127,20 +128,18 @@ public partial class BarChartComponent
                 colorIndex = 0;
         }
 
-        svg.AppendLine("</svg>");
-
-        return svg.ToString();
+        return layout;
     }
 
-    private double FillReferenceValue()
+    private double FillReferenceValue(List<ChartSegment> topics)
     {
         double result = 0;
 
-        if (Topics.Any())
+        if (topics.Count > 0)
         {
             result = Parameters.FillReference == ColumnFillReference.TotalOfAllValues
-                ? Topics.Sum(topic => topic.Value)
-                : Topics.Max(topic => topic.Value);
+                ? topics.Sum(topic => topic.Value)
+                : topics.Max(topic => topic.Value);
         }
 
         return result;
@@ -154,29 +153,26 @@ public partial class BarChartComponent
         LabelPlacement == ColumnLabelPlacement.Top ||
         LabelPlacement == ColumnLabelPlacement.Bottom;
 
-    private string LabelMarkup(string label, double rowY, double barY, double textY,
-        double totalWidth, double innerPadding, double labelWidth, double thickness, int fontSize)
+    private void AddLabel(ChartLayout layout, string label, int index, double rowY, double barY,
+        double textY, double totalWidth, double innerPadding, double labelWidth, double thickness,
+        int fontSize)
     {
-        string result;
-
         if (LabelPlacement == ColumnLabelPlacement.Top)
         {
-            result = SvgHelper.Text(label, 0, rowY + fontSize, "start", fontSize);
+            layout.AddText(label, 0, rowY + fontSize, "start", fontSize, index);
         }
         else if (LabelPlacement == ColumnLabelPlacement.Bottom)
         {
-            result = SvgHelper.Text(
-                label, 0, barY + thickness + innerPadding + fontSize, "start", fontSize);
+            layout.AddText(label, 0, barY + thickness + innerPadding + fontSize, "start",
+                fontSize, index);
         }
         else if (LabelPlacement == ColumnLabelPlacement.Left)
         {
-            result = SvgHelper.Text(label, labelWidth - innerPadding, textY, "end", fontSize);
+            layout.AddText(label, labelWidth - innerPadding, textY, "end", fontSize, index);
         }
         else
         {
-            result = SvgHelper.Text(label, totalWidth - innerPadding, textY, "end", fontSize);
+            layout.AddText(label, totalWidth - innerPadding, textY, "end", fontSize, index);
         }
-
-        return result;
     }
 }

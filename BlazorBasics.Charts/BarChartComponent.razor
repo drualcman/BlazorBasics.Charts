@@ -1,4 +1,19 @@
-﻿@if (!string.IsNullOrWhiteSpace(SvgMarkup.Value))
-{
-    @SvgMarkup
-}
+<div class="bar-chart @WrapperCss">
+    <svg width="@(Layout.CssWidth ?? SvgHelper.Number(Layout.Width))"
+         height="@SvgHelper.Number(Layout.Height)"
+         viewBox="0 0 @SvgHelper.Number(Layout.Width) @SvgHelper.Number(Layout.Height)"
+         preserveAspectRatio="@Layout.PreserveAspectRatio"
+         xmlns="http://www.w3.org/2000/svg">
+        @foreach (ChartShape shape in Layout.Shapes)
+        {
+            <rect x="@SvgHelper.Number(shape.X)" y="@SvgHelper.Number(shape.Y)"
+                  width="@SvgHelper.Number(shape.Width)" height="@SvgHelper.Number(shape.Height)"
+                  fill="@shape.Colour" style="@ClickableStyle"
+                  @onclick="() => SegmentClick(shape.SegmentIndex)" />
+        }
+        @foreach (ChartText label in Layout.Texts)
+        {
+            @ChartMarkupHelper.TextElement(this, label, ClickableStyle, SegmentClick)
+        }
+    </svg>
+</div>

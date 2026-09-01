@@ -646,6 +646,70 @@ Then you can do
 }
 ```
 
+# Reacting to what the user clicks
+Every chart made of parts tells you which one was clicked, so the page around it can react. The callback of each chart carries the type that chart works with, and nothing happens at all when no handler is given.
+
+| Chart | Callback | What it carries | What is clickable |
+|---|---|---|---|
+| `PieChartComponent` | `OnClick` | `ChartSegment` | The slice and its entry in the legend |
+| `ColumnChartComponent` | `OnClick` | `ChartSegment` | The column, the empty part of it and its label |
+| `BarChartComponent` | `OnClick` | `ChartSegment` | The bar, the empty part of its row and its label |
+| `StackedBarChartComponent` | `OnClick` | `ChartSegment` | Each segment and its label |
+| `LineChartComponent` | `OnPointClick` | `LineChartPoint` | Every dot drawn, the highest and lowest ones included |
+| `LineChartComponent` | `OnLegendClick` | `LineData` | Each series in the legend |
+| `ColumnWithLineChartComponent` | `OnItemClick` | `ColumnDataItem` | The columns and the points of the lines |
+| `ColumnWithLineChartComponent` | `OnPointClick` | `ColumnWithLinePoint` | The points of the lines, saying which line |
+
+``` razor
+<BarChartComponent Topics=Totals OnClick=Selected />
+<StackedBarChartComponent Topics=Totals OnClick=Selected />
+<LineChartComponent Data=ChartData OnPointClick=PointSelected OnLegendClick=SeriesSelected />
+
+@code {
+    void Selected(ChartSegment segment)
+    {
+        // segment.Name, segment.Value, segment.ChartColor ...
+    }
+
+    void PointSelected(LineChartPoint point)
+    {
+        // point.SeriesName, point.Index, point.Value, point.Label
+    }
+
+    void SeriesSelected(LineData series)
+    {
+        // series.Name and every value of that line
+    }
+}
+```
+The empty part of a column or of a bar answers the click with the same value as the filled part, so a small value is as easy to hit as a big one.
+
+The charts that select something of their own keep doing it: the line chart still opens its popup on a point and still isolates a series from the legend, and the callback is raised as well as that, not instead of it.
+
+``` csharp
+public class LineChartPoint
+{
+    public string SeriesName { get; }
+    public string Colour { get; }
+    public int Index { get; }   // position in the series, counting from zero
+    public string Value { get; }  // the value as it was given, before being parsed
+    public string Label { get; }  // the X axis label at that position, when there is one
+}
+```
+A point of a `ColumnWithLineChartComponent` raises both of its callbacks, `OnItemClick` first and then `OnPointClick`; a column raises only the first. The points of the lines are drawn, and can therefore be clicked, only when `ShowGranTotal`, `ShowPrimaryValues` or `ShowSecondaryValues` are on, each one bringing its own line.
+
+``` csharp
+public class ColumnWithLinePoint
+{
+    public ColumnDataItem Item { get; }
+    public int Index { get; }                 // position in the data, counting from zero
+    public ColumnWithLineSeries Series { get; }  // GrandTotal, Primary or Secondary
+    public string Percentage { get; }         // what the chart writes over that point
+}
+```
+
+`RingPercentageComponent` has no callback: it is one whole ring, there are no parts to tell apart.
+
 # Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
 

@@ -5,6 +5,12 @@ public partial class ColumnChartComponent
     [Parameter] public IEnumerable<ChartSegment> Topics { get; set; }
     [Parameter] public ColumnsBarChartParams Parameters { get; set; } = new();
 
+    /// <summary>
+    /// Raised with the value behind whatever was clicked, be it the column, the part of it that is
+    /// still empty, or its label.
+    /// </summary>
+    [Parameter] public EventCallback<ChartSegment> OnClick { get; set; }
+
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object> Attributes { get; set; }
 
@@ -14,8 +20,9 @@ public partial class ColumnChartComponent
     private const double GlyphAscentFactor = 0.75;
     private const double GlyphDescentFactor = 0.25;
 
-    private MarkupString SvgMarkup = new();
     private string WrapperCss = "";
+    private List<ChartSegment> Segments = [];
+    private ChartLayout Layout = new();
 
     /// <summary>
     /// Rotated labels default to running beside their column, where they have the height of the
@@ -29,12 +36,24 @@ public partial class ColumnChartComponent
     {
         if (Attributes is not null && Attributes.TryGetValue("class", out object css))
             WrapperCss = css.ToString();
-        SvgMarkup = new MarkupString(GenerateSvg());
+        Segments = Topics is null ? [] : [.. Topics];
+        Layout = BuildLayout(Segments);
     }
 
-    public string GenerateSvg()
+    public string GenerateSvg() =>
+        SvgHelper.Document(BuildLayout(Topics is null ? [] : [.. Topics]));
+
+    private string ClickableStyle => OnClick.HasDelegate ? "cursor: pointer;" : null;
+
+
+    private Task SegmentClick(int segmentIndex) =>
+        segmentIndex >= 0 && segmentIndex < Segments.Count && OnClick.HasDelegate
+            ? OnClick.InvokeAsync(Segments[segmentIndex])
+            : Task.CompletedTask;
+
+    private ChartLayout BuildLayout(List<ChartSegment> topics)
     {
-        double fillReference = FillReferenceValue();
+        double fillReference = FillReferenceValue(topics);
 
         double columnWidth = Parameters.Thickness;
         double totalHeight = Parameters.Dimension;
@@ -52,7 +71,7 @@ public partial class ColumnChartComponent
             : totalHeight * barAreaRatio;
         double labelAreaHeight = labelsBesideTheColumns
             ? 0
-            : LabelAreaHeight(totalHeight * labelAreaRatio);
+            : LabelAreaHeight(topics, totalHeight * labelAreaRatio);
 
         double labelAreaOnTop =
             LabelPlacement == ColumnLabelPlacement.Top ? labelAreaHeight : 0;
@@ -64,20 +83,22 @@ public partial class ColumnChartComponent
         double barAreaTop = labelAreaOnTop + valueAreaHeight;
         double barBottomY = barAreaTop + barAreaHeight;
 
-        int columnCount = Topics.Count();
-        double slotWidth = totalWidth / columnCount;
+        int columnCount = topics.Count;
+        double slotWidth = columnCount > 0 ? totalWidth / columnCount : totalWidth;
         double minGap = 5;
         columnWidth = Math.Min(columnWidth, slotWidth - minGap);
 
-        StringBuilder svg = new StringBuilder();
-
-        svg.AppendLine(
-            $"<svg width=\"100%\" height=\"{totalHeight}\" viewBox=\"0 0 {totalWidth} {totalHeight}\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMin meet\">"
-        );
+        ChartLayout layout = new ChartLayout
+        {
+            Width = totalWidth,
+            Height = totalHeight,
+            CssWidth = "100%",
+            PreserveAspectRatio = "xMidYMin meet"
+        };
 
         for (int index = 0; index < columnCount; index++)
         {
-            ChartSegment topic = Topics.ElementAt(index);
+            ChartSegment topic = topics[index];
 
             double percentage = fillReference > 0 ? topic.Value / fillReference : 0;
             double barHeight = barAreaHeight * percentage;
@@ -85,37 +106,36 @@ public partial class ColumnChartComponent
             double columnX = (index * slotWidth) + (slotWidth / 2) - (columnWidth / 2);
             double barY = barBottomY - barHeight;
 
-            // Draw background
-            svg.AppendLine(SvgHelper.Rect(columnX, barAreaTop, columnWidth, barAreaHeight, Parameters.BackgroundColour));
-            // Draw bar
-            string color = string.IsNullOrWhiteSpace(topic.ChartColor) ? Parameters.ChartColors[index % Parameters.MaxColours].Background : topic.ChartColor;
-            svg.AppendLine(SvgHelper.Rect(columnX, barY, columnWidth, barHeight, color));
+            layout.AddShape(columnX, barAreaTop, columnWidth, barAreaHeight,
+                Parameters.BackgroundColour, index);
 
-            // Draw value
+            string colour = string.IsNullOrWhiteSpace(topic.ChartColor)
+                ? Parameters.ChartColors[index % Parameters.MaxColours].Background
+                : topic.ChartColor;
+            layout.AddShape(columnX, barY, columnWidth, barHeight, colour, index);
+
             if (Parameters.ShowValues)
-                svg.AppendLine(SvgHelper.Text(topic.Value.ToString(CultureInfo.InvariantCulture), columnX + columnWidth / 2, barAreaTop - 5, "middle", 12));
+            {
+                layout.AddText(topic.Value.ToString(CultureInfo.InvariantCulture),
+                    columnX + (columnWidth / 2), barAreaTop - 5, "middle", 12, index);
+            }
 
-            // Draw label
-            svg.AppendLine(LabelMarkup(
-                topic.Name, columnX, columnWidth, labelAreaOnTop, barAreaTop, barAreaHeight,
-                barBottomY, totalWidth));
+            AddLabel(layout, topic.Name, index, columnX, columnWidth, labelAreaOnTop,
+                barAreaHeight, barBottomY, totalWidth);
         }
 
-
-        svg.AppendLine("</svg>");
-
-        return svg.ToString();
+        return layout;
     }
 
-    private double FillReferenceValue()
+    private double FillReferenceValue(List<ChartSegment> topics)
     {
         double result = 0;
 
-        if (Topics.Any())
+        if (topics.Count > 0)
         {
             result = Parameters.FillReference == ColumnFillReference.TotalOfAllValues
-                ? Topics.Sum(topic => topic.Value)
-                : Topics.Max(topic => topic.Value);
+                ? topics.Sum(topic => topic.Value)
+                : topics.Max(topic => topic.Value);
         }
 
         return result;
@@ -125,38 +145,33 @@ public partial class ColumnChartComponent
         LabelPlacement == ColumnLabelPlacement.Left ||
         LabelPlacement == ColumnLabelPlacement.Right;
 
-    private string LabelMarkup(string label, double columnX, double columnWidth,
-        double labelAreaOnTop, double barAreaTop, double barAreaHeight, double barBottomY,
+    private void AddLabel(ChartLayout layout, string label, int index, double columnX,
+        double columnWidth, double labelAreaOnTop, double barAreaHeight, double barBottomY,
         double totalWidth)
     {
-        string result;
-
         if (LabelsAreBesideTheColumns())
         {
-            result = LabelBesideTheColumn(
-                label, columnX, columnWidth, barAreaHeight, barBottomY, totalWidth);
+            AddLabelBesideTheColumn(
+                layout, label, index, columnX, columnWidth, barAreaHeight, barBottomY, totalWidth);
         }
         else if (LabelPlacement == ColumnLabelPlacement.Top)
         {
-            result = LabelOutsideTheColumns(label, columnX + (columnWidth / 2), labelAreaOnTop, false);
+            AddLabelOutsideTheColumns(
+                layout, label, index, columnX + (columnWidth / 2), labelAreaOnTop, false);
         }
         else
         {
-            result = LabelOutsideTheColumns(
-                label, columnX + (columnWidth / 2), barBottomY + LabelGap, true);
+            AddLabelOutsideTheColumns(
+                layout, label, index, columnX + (columnWidth / 2), barBottomY + LabelGap, true);
         }
-
-        return result;
     }
 
     /// <summary>
     /// Label drawn above or below every column, on the area the chart grew to fit it.
     /// </summary>
-    private string LabelOutsideTheColumns(string label, double columnCentreX, double y,
-        bool growsDownwards)
+    private void AddLabelOutsideTheColumns(ChartLayout layout, string label, int index,
+        double columnCentreX, double y, bool growsDownwards)
     {
-        string result;
-
         if (Parameters.RotatedLabels)
         {
             double angleRadians = ChartMathHelpers.CalculateRadious(Parameters.LabelRotationAngle);
@@ -164,23 +179,22 @@ public partial class ColumnChartComponent
                 columnCentreX - (Parameters.LabelFontSize * GlyphDescentFactor * Math.Sin(angleRadians));
             string anchor = ReadingGoesDownwards(angleRadians) == growsDownwards ? "start" : "end";
 
-            result = SvgHelper.RotatedTextAt(
-                label, baselineX, y, Parameters.LabelRotationAngle, Parameters.LabelFontSize, anchor);
+            layout.AddText(label, baselineX, y, anchor, Parameters.LabelFontSize, index,
+                rotationAngle: Parameters.LabelRotationAngle);
         }
         else
         {
-            result = SvgHelper.Text(label, columnCentreX, y, "middle", Parameters.LabelFontSize);
+            layout.AddText(label, columnCentreX, y, "middle", Parameters.LabelFontSize, index);
         }
-
-        return result;
     }
 
     /// <summary>
     /// Label drawn alongside its own column, running from the base of the chart upwards, so the
     /// room it has is the height of the column and not the width of the slot.
     /// </summary>
-    private string LabelBesideTheColumn(string label, double columnX, double columnWidth,
-        double barAreaHeight, double barBottomY, double totalWidth)
+    private void AddLabelBesideTheColumn(ChartLayout layout, string label, int index,
+        double columnX, double columnWidth, double barAreaHeight, double barBottomY,
+        double totalWidth)
     {
         bool onTheLeft = LabelPlacement == ColumnLabelPlacement.Left;
         // The label has to sit closer to its own column than to the one next to it, otherwise it
@@ -188,7 +202,6 @@ public partial class ColumnChartComponent
         double besideGap = Parameters.LabelFontSize * GlyphDescentFactor;
         double leftEdge = columnX - besideGap;
         double rightEdge = columnX + columnWidth + besideGap;
-        string result;
 
         if (Parameters.RotatedLabels)
         {
@@ -205,33 +218,30 @@ public partial class ColumnChartComponent
             // pulled back inside instead of being cut away by the viewBox.
             double roomOnTheLeft = glyphsGrowToTheLeft ? ascent : descent;
             double roomOnTheRight = glyphsGrowToTheLeft ? descent : ascent;
-            baselineX = Math.Min(
-                Math.Max(baselineX, roomOnTheLeft), totalWidth - roomOnTheRight);
+            baselineX = Math.Min(Math.Max(baselineX, roomOnTheLeft), totalWidth - roomOnTheRight);
 
-            result = SvgHelper.RotatedTextAt(
-                ShortenToFit(label, barAreaHeight - LabelAreaPadding),
-                baselineX, barBottomY, Parameters.LabelRotationAngle, Parameters.LabelFontSize,
-                ReadingGoesDownwards(angleRadians) ? "end" : "start");
+            layout.AddText(ShortenToFit(label, barAreaHeight - LabelAreaPadding), baselineX,
+                barBottomY, ReadingGoesDownwards(angleRadians) ? "end" : "start",
+                Parameters.LabelFontSize, index,
+                rotationAngle: Parameters.LabelRotationAngle);
         }
         else
         {
-            result = SvgHelper.Text(label, onTheLeft ? leftEdge : rightEdge, barBottomY,
-                onTheLeft ? "end" : "start", Parameters.LabelFontSize);
+            layout.AddText(label, onTheLeft ? leftEdge : rightEdge, barBottomY,
+                onTheLeft ? "end" : "start", Parameters.LabelFontSize, index);
         }
-
-        return result;
     }
 
     private static bool ReadingGoesDownwards(double angleRadians) => Math.Sin(angleRadians) > 0;
 
-    private double LabelAreaHeight(double defaultHeight)
+    private double LabelAreaHeight(List<ChartSegment> topics, double defaultHeight)
     {
         double result = defaultHeight;
 
         if (Parameters.RotatedLabels)
         {
-            double longestLabelWidth = Topics.Any()
-                ? Topics.Max(topic => EstimatedLabelWidth(topic.Name))
+            double longestLabelWidth = topics.Count > 0
+                ? topics.Max(topic => EstimatedLabelWidth(topic.Name))
                 : 0;
 
             double angleRadians = ChartMathHelpers.CalculateRadious(Parameters.LabelRotationAngle);

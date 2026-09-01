@@ -78,7 +78,7 @@
                             cy="@BigTotalPoints[i].Y"
                             r="5"
                             fill="@BigTotalPoints[i].Color"
-                            @onclick="() => OnColumnClick(item)" @onclick:stopPropagation />
+                            @onclick="() => SelectPoint(item, i, BigTotalPoints[i], ColumnWithLineSeries.GrandTotal, BigTotalPercentageLabels[i].Label)" @onclick:stopPropagation />
                     @(
                         new MarkupString(SvgHelper.Text(
                         Parameters.BigTotalValueLabelFormatter?.Invoke(item) ?? BigTotalPercentageLabels[i].Label,
@@ -95,7 +95,7 @@
                             cy="@PrimaryPoints[i].Y"
                             r="5"
                             fill="@PrimaryPoints[i].Color"
-                            @onclick="() => OnPointClick(item, PrimaryPoints[i])" @onclick:stopPropagation />
+                            @onclick="() => SelectPoint(item, i, PrimaryPoints[i], ColumnWithLineSeries.Primary, PrimaryPercentageLabels[i].Label)" @onclick:stopPropagation />
                     if(IsShowingPrimaryValues || PrimaryPoints[i] == SelectedPoint)
                     {
                         @(
@@ -115,7 +115,7 @@
                             cy="@SecondaryPoints[i].Y"
                             r="5"
                             fill="@SecondaryPoints[i].Color"
-                            @onclick="() => OnPointClick(item, SecondaryPoints[i])" @onclick:stopPropagation />
+                            @onclick="() => SelectPoint(item, i, SecondaryPoints[i], ColumnWithLineSeries.Secondary, SecondaryPercentageLabels[i].Label)" @onclick:stopPropagation />
                     if(IsShowingSecondValues || SecondaryPoints[i] == SelectedPoint)
                     {
                         @(

@@ -58,7 +58,7 @@
                                         stroke-width="1"
                                         style="cursor: pointer;"
                                         @key="GetCircleSerieKey(serie, p)"
-                                        @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                                        @onclick="() => SelectPoint(serie, point, selection)" @onclick:stopPropagation />
                             }
                         }
                         else if (SelectedSerie is null)
@@ -79,7 +79,7 @@
                                             stroke-width="1"
                                             style="cursor: pointer;"
                                             @key="GetCircleSerieKey(serie,p)"
-                                            @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                                            @onclick="() => SelectPoint(serie, point, selection)" @onclick:stopPropagation />
                                 }
                             }
                             else
@@ -96,7 +96,7 @@
                                             stroke-width="1"
                                             style="cursor: pointer;"
                                             @key="GetCircleSerieKey(serie, p)"
-                                            @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                                            @onclick="() => SelectPoint(serie, serie.MaxPoint, selection)" @onclick:stopPropagation />
                                 }
 
                                 if (Parameters.PointOptions.VisibleMinPoint && serie.MinPoint is not null)
@@ -111,7 +111,7 @@
                                             stroke-width="1"
                                             style="cursor: pointer;"
                                             @key="GetCircleSerieKey(serie, p)"
-                                            @onclick="() => OnPointClick(selection)" @onclick:stopPropagation />
+                                            @onclick="() => SelectPoint(serie, serie.MinPoint, selection)" @onclick:stopPropagation />
                                 }
                             }
                         }

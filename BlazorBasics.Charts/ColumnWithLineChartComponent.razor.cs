@@ -10,6 +10,12 @@ public partial class ColumnWithLineChartComponent
 
     [Parameter] public EventCallback<ColumnDataItem> OnItemClick { get; set; }
 
+    /// <summary>
+    /// Raised when one of the points of the lines is clicked, saying which of the three lines it
+    /// belongs to, which the item on its own cannot tell. OnItemClick is raised as well.
+    /// </summary>
+    [Parameter] public EventCallback<ColumnWithLinePoint> OnPointClick { get; set; }
+
     const int Margin = 15;
     private string Style;
     private string WrapperCss = "";
@@ -142,12 +148,19 @@ public partial class ColumnWithLineChartComponent
         await OnItemClick.InvokeAsync(item);
     }
 
-    private async Task OnPointClick(ColumnDataItem item, ColumnBar point)
+    private async Task SelectPoint(ColumnDataItem item, int index, ColumnBar point,
+        ColumnWithLineSeries series, string percentage)
     {
         HideLabels();
         SelectedPoint = point;
         SelectedItem = item;
         await OnItemClick.InvokeAsync(SelectedItem);
+
+        if (OnPointClick.HasDelegate)
+        {
+            await OnPointClick.InvokeAsync(
+                new ColumnWithLinePoint(item, index, series, percentage));
+        }
     }
 
     void ShowPrimaryValues()
