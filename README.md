@@ -2,7 +2,7 @@
 [![Nuget](https://img.shields.io/nuget/dt/BlazorBasics.Charts?style=for-the-badge)](https://www.nuget.org/packages/BlazorBasics.Charts)
 
 # Description
-Create charts simples from data. You can create a Pie Chart, Columns Chart or Bar Chart.
+Create charts simples from data. You can create a Pie Chart, Columns Chart, Bar Chart or Stacked Bar Chart.
 # How to use simple way
 Import the name space adding to _Imports.razor this line:
 ```
@@ -111,6 +111,8 @@ Also you can set some parameters
 ``` csharp
 public class ColumnsBarChartParams
 {
+    public const double VERTICAL_LABEL_ANGLE = -90;
+
     public ColumnsBarChartParams(
         string backgroundColour = "#D3D3D3",
         int thickness = 20,
@@ -118,7 +120,12 @@ public class ColumnsBarChartParams
         bool showValues = false,
         IEnumerable<ChartColor> chartColours = null,
         int gap = 5,
-        int maxWidth = 600)
+        int maxWidth = 600,
+        bool rotatedLabels = false,
+        double labelRotationAngle = VERTICAL_LABEL_ANGLE,
+        int labelFontSize = 12,
+        ColumnLabelPlacement? labelPlacement = null,
+        ColumnFillReference fillReference = ColumnFillReference.HighestValue)
     {
         BackgroundColour = backgroundColour;
         Thickness = thickness;
@@ -129,6 +136,11 @@ public class ColumnsBarChartParams
         ChartColors = new(chartColours ?? ChartColourHelper
             .InitializeColours(256, 30));
         MaxWidth = maxWidth;
+        RotatedLabels = rotatedLabels;
+        LabelRotationAngle = labelRotationAngle;
+        LabelFontSize = labelFontSize;
+        LabelPlacement = labelPlacement;
+        FillReference = fillReference;
     }
 
     public string BackgroundColour { get; init; }
@@ -137,6 +149,11 @@ public class ColumnsBarChartParams
     public int MaxWidth { get; init; }
     public int Gap { get; init; }
     public bool ShowValues { get; init; }
+    public bool RotatedLabels { get; init; }
+    public double LabelRotationAngle { get; init; }
+    public int LabelFontSize { get; init; }
+    public ColumnLabelPlacement? LabelPlacement { get; init; }
+    public ColumnFillReference FillReference { get; init; }
     public List<ChartColor> ChartColors { get; set; }
     public int MaxColours => ChartColors.Count;
 }
@@ -163,6 +180,161 @@ Then you can do
         ];
     }
 }
+```
+
+### How much of the column or bar gets filled
+`FillReference` decides what a completely filled shape means.
+
+``` csharp
+public enum ColumnFillReference
+{
+    HighestValue,     // default
+    TotalOfAllValues
+}
+```
+* `HighestValue`: the biggest value fills its shape completely and every other one is drawn against it. Use it to compare the values with each other. The empty part means nothing.
+* `TotalOfAllValues`: the values are added together and each one fills its own share of that total, so a value worth a fifth of everything fills a fifth of its shape. Use it to read each value as part of the whole. The empty part is what the other values take.
+
+`TotalOfAllValues` reads much better on `BarChartComponent` than on `ColumnChartComponent`, because a bar spreads the share along the whole width while a column only has its height, and a flat set of values leaves every column looking almost empty.
+
+``` razor
+<BarChartComponent Topics=Totals Parameters=BarParams />
+
+@code {
+    ColumnsBarChartParams BarParams =
+        new(fillReference: ColumnFillReference.TotalOfAllValues);
+}
+```
+
+### Where the labels go
+`LabelPlacement` moves the label of every column or bar.
+
+``` csharp
+public enum ColumnLabelPlacement
+{
+    Bottom,
+    Top,
+    Left,
+    Right
+}
+```
+Left `null`, each chart keeps the placement it has always had: `Bottom` for `ColumnChartComponent` with horizontal labels, `Left` for `ColumnChartComponent` once the labels are rotated, and `Right` for `BarChartComponent`.
+
+On **`ColumnChartComponent`**:
+* `Bottom` and `Top` write the label outside the plotting area and the chart grows as much as the longest label needs, so nothing is ever cut.
+* `Left` and `Right` run the label alongside its own column. The room a label has becomes the height of the chart instead of the width of the slot, so it is only shortened with an ellipsis when it does not fit in that height. This is the placement to use when the names are longer than the columns are wide.
+
+On **`BarChartComponent`**:
+* `Right` closes every row with its label, and `Left` reserves a column on the left and moves the bars across.
+* `Top` and `Bottom` give the label a line of its own above or below its bar, with the full width to itself, so long names never need shortening. The rows grow to make room for it.
+
+### Vertical labels on a column chart
+`RotatedLabels` turns the labels of `ColumnChartComponent` by `LabelRotationAngle`. Negative angles read from bottom to top, positive ones from top to bottom, and `ColumnsBarChartParams.VERTICAL_LABEL_ANGLE` (-90) is fully vertical. `LabelFontSize` sets their size, in both charts.
+
+``` razor
+<ColumnChartComponent Topics=Totals Parameters=ColumnParams />
+
+@code {
+    ColumnsBarChartParams ColumnParams =
+        new(thickness: 34, dimension: 240, rotatedLabels: true);
+}
+```
+The rotation is only applied by `ColumnChartComponent`; on a horizontal bar chart it would not help, so `BarChartComponent` ignores it and uses `LabelPlacement` alone.
+
+## Stacked Bar Chart
+Draws every value as a slice of one single bar, so what is read is the share each value takes of the whole rather than how the values compare to each other. It is the data of a pie chart drawn as a bar.
+
+``` razor
+<StackedBarChartComponent Topics=Totals />
+
+@code {
+    IEnumerable<ChartSegment> Totals;
+
+    protected override void OnInitialized()
+    {
+        Totals =
+        [
+            new ChartSegment { Name = "Tagum", Value = 1204 },
+            new ChartSegment { Name = "Asuncion", Value = 486 },
+            ...
+        ];
+    }
+}
+```
+Also you can set some parameters
+``` csharp
+public class StackedBarChartParams
+{
+    public StackedBarChartParams(
+        StackedBarOrientation orientation = StackedBarOrientation.Horizontal,
+        int thickness = 40,
+        int length = 600,
+        string backgroundColour = "#D3D3D3",
+        IEnumerable<ChartColor> chartColours = null,
+        bool showValues = false,
+        StackedBarLabelSide labelSide = StackedBarLabelSide.After,
+        StackedBarLabelAlignment labelAlignment = StackedBarLabelAlignment.Start,
+        int labelFontSize = 12,
+        double minimumLabelShare = 0.03,
+        double total = 0)
+
+    public StackedBarOrientation Orientation { get; init; }
+    public int Thickness { get; init; }
+    public int Length { get; init; }
+    public string BackgroundColour { get; init; }
+    public bool ShowValues { get; init; }
+    public StackedBarLabelSide LabelSide { get; init; }
+    public StackedBarLabelAlignment LabelAlignment { get; init; }
+    public int LabelFontSize { get; init; }
+    public double MinimumLabelShare { get; init; }
+    public double Total { get; init; }
+    public List<ChartColor> ChartColors { get; set; }
+    public int MaxColours => ChartColors.Count;
+}
+
+public enum StackedBarOrientation
+{
+    Vertical,     // one column, stacked from the top downwards
+    Horizontal    // one bar, stacked from left to right
+}
+
+public enum StackedBarLabelSide
+{
+    Before,   // left of a vertical bar, above a horizontal one
+    After,    // right of a vertical bar, below a horizontal one
+    Inside    // over its own segment, in the contrasting colour of the segment
+}
+
+public enum StackedBarLabelAlignment
+{
+    Start,
+    Middle,
+    End
+}
+```
+* `Thickness` is how wide a vertical bar is, or how tall a horizontal one is. `Length` is how long it runs in the direction it stacks in.
+* The labels turn with the orientation and that is not configurable: they read horizontally beside a vertical bar and vertically above or below a horizontal one, which is the only way round they can be read in each case. `LabelSide` and `LabelAlignment` then work the same in both.
+* `MinimumLabelShare` leaves out the label of any segment smaller than that share of the whole, given as a fraction, because there is no room to write one without it landing on its neighbours. The room reserved for the labels is measured only over the ones that are actually drawn, so leaving the small ones out also makes the chart smaller. Set it to zero to label every segment.
+* `ShowValues` writes the value across the middle of its own segment, in the contrasting colour, and only when the segment is long enough to hold it. It is ignored when the names already go `Inside`, so the two never collide.
+* `Total` is what the complete bar is worth. Left at zero the values are added together and the bar is always full; set to a known total, whatever the values do not account for stays as unfilled bar in `BackgroundColour`.
+
+``` razor
+<StackedBarChartComponent Topics=Totals Parameters=StackedParams />
+
+@code {
+    StackedBarChartParams StackedParams = new(
+        StackedBarOrientation.Vertical,
+        thickness: 46,
+        length: 320,
+        showValues: true,
+        labelSide: StackedBarLabelSide.After,
+        labelAlignment: StackedBarLabelAlignment.Start);
+}
+```
+The chart asks for its own size, which for a vertical bar is narrow and tall. Its wrapper carries the `stacked-bar-chart` class plus `is-vertical` or `is-horizontal`, so stretching it, or leaving it alone, is up to the css of the page:
+``` css
+.my-card ::deep .stacked-bar-chart.is-horizontal svg { width: 100%; height: auto; }
+.my-card ::deep .stacked-bar-chart.is-vertical svg { width: auto; max-width: 100%; }
 ```
 
 ### Personalize Charts
@@ -197,7 +369,13 @@ All chart automatic set the colours depending in how many items have the data. B
     }
 }
 ```
-This is aplicable for Pie Chart, Column Chart and Bar Chart. Color can be rgb(0,0,0), HEX #000000 or hsl(1,80,40).
+This is aplicable for Pie Chart, Column Chart, Bar Chart and Stacked Bar Chart. Color can be rgb(0,0,0), HEX #000000 or hsl(1,80,40).
+
+A `ChartColor` can also be given the colour of the text written over it, which is what the Stacked Bar Chart uses for the labels and values it writes inside a segment. With one colour only, the contrasting one is worked out for you.
+``` csharp
+new ChartColor("#2E3092", "#FFFFFF")   // background and text over it
+new ChartColor("#2E3092")              // text colour worked out from the background
+```
 
 ## Line Chart
 Example about Line Chart.

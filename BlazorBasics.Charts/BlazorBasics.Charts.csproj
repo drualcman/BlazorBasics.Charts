@@ -4,19 +4,19 @@
 		<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.2.18</Version>
+		<Version>1.3.19</Version>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Authors>Sergi Ortiz Gomez</Authors>
 		<Company>DrUalcman</Company>
-		<Description>Simple Charts (Pie, Columns, Bars, Lines, Ring percentage) to use in Razor Projects.</Description>
+		<Description>Simple Charts (Pie, Columns, Bars, Stacked bars, Lines, Ring percentage) to use in Razor Projects.</Description>
 		<Copyright>Free</Copyright>
 		<RepositoryUrl>https://github.com/drualcman/BlazorBasics.Charts</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<PackageTags>charts;pie;bars;lines;ring;percentage;blazor;blazor server; blazor webassembly</PackageTags>
+		<PackageTags>charts;pie;bars;stacked;lines;ring;percentage;blazor;blazor server; blazor webassembly</PackageTags>
 		<PackageId>BlazorBasics.Charts</PackageId>
 		<Product>BlazorBasics.Charts</Product>
-		<PackageReleaseNotes>Target NET10. Update dependencies.</PackageReleaseNotes>
+		<PackageReleaseNotes>New StackedBarChartComponent, one single bar split into the share every value takes of the whole, in either orientation. Column and Bar charts take a ColumnFillReference to fill against the highest value or against the total, and a ColumnLabelPlacement to put the labels at the bottom, top, left or right. Column chart labels can be rotated, and their font size is configurable. Existing charts keep their previous look.</PackageReleaseNotes>
 		<PackageProjectUrl>https://github.com/drualcman/BlazorBasics.Charts</PackageProjectUrl>
 	</PropertyGroup>
 
