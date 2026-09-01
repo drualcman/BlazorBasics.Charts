@@ -10,6 +10,12 @@ public partial class BarChartComponent
 
     MarkupString SvgMarkup = new();
 
+    /// <summary>
+    /// The bar chart has always closed every row with its label, so that stays the default here.
+    /// </summary>
+    private ColumnLabelPlacement LabelPlacement =>
+        Parameters.LabelPlacement ?? ColumnLabelPlacement.Right;
+
     protected override void OnParametersSet()
     {
         SvgMarkup = new MarkupString(GenerateSvg());
@@ -17,7 +23,7 @@ public partial class BarChartComponent
 
     public string GenerateSvg()
     {
-        double maxQuantity = Topics.Any() ? Topics.Max(t => t.Value) : 0;
+        double fillReference = FillReferenceValue();
 
         double logicalWidth = Parameters.MaxWidth;
         double totalWidth = logicalWidth;
@@ -38,7 +44,25 @@ public partial class BarChartComponent
 
         double innerPadding = 5;
 
-        double totalHeight = Topics.Count() * (thickness + gap);
+        int labelFontSize = Parameters.LabelFontSize;
+        bool labelOnItsOwnLine = LabelIsOnItsOwnLine();
+        bool labelBeforeTheBar = LabelPlacement == ColumnLabelPlacement.Left;
+
+        double labelLineHeight = labelOnItsOwnLine ? labelFontSize + innerPadding : 0;
+        double rowHeight = thickness + gap + labelLineHeight;
+
+        double barX = 0;
+        if (labelOnItsOwnLine)
+        {
+            barWidthTotal = totalWidth - (Parameters.ShowValues ? valueWidth : 0);
+        }
+        else if (labelBeforeTheBar)
+        {
+            barX = labelWidth;
+            barWidthTotal = totalWidth - labelWidth - (Parameters.ShowValues ? valueWidth : 0);
+        }
+
+        double totalHeight = Topics.Count() * rowHeight;
 
         StringBuilder svg = new StringBuilder();
 
@@ -57,26 +81,30 @@ public partial class BarChartComponent
 
         foreach (ChartSegment topic in Topics)
         {
-            double percentage = maxQuantity > 0 ? topic.Value / maxQuantity : 0;
+            double percentage = fillReference > 0 ? topic.Value / fillReference : 0;
             double barWidth = barWidthTotal * percentage;
+
+            double barY = LabelPlacement == ColumnLabelPlacement.Top
+                ? y + labelLineHeight
+                : y;
 
             string color = string.IsNullOrWhiteSpace(topic.ChartColor)
                 ? Parameters.ChartColors[colorIndex].Background
                 : topic.ChartColor;
 
             svg.AppendLine(
-                SvgHelper.Rect(0, y, barWidthTotal, thickness, Parameters.BackgroundColour)
+                SvgHelper.Rect(barX, barY, barWidthTotal, thickness, Parameters.BackgroundColour)
             );
 
             svg.AppendLine(
-                SvgHelper.Rect(0, y, barWidth, thickness, color)
+                SvgHelper.Rect(barX, barY, barWidth, thickness, color)
             );
 
-            double textY = y + thickness - 5;
+            double textY = barY + thickness - 5;
 
             if (Parameters.ShowValues)
             {
-                double valueX = barWidthTotal + innerPadding;
+                double valueX = barX + barWidthTotal + innerPadding;
                 svg.AppendLine(
                     SvgHelper.Text(
                         topic.Value.ToString(CultureInfo.InvariantCulture),
@@ -88,19 +116,11 @@ public partial class BarChartComponent
                 );
             }
 
-            double labelX = totalWidth - innerPadding;
-            svg.AppendLine(
-                SvgHelper.Text(
-                    topic.Name,
-                    labelX,
-                    textY,
-                    "end",
-                    12
-                )
-            );
+            svg.AppendLine(LabelMarkup(topic.Name, y, barY, textY, totalWidth, innerPadding,
+                labelWidth, thickness, labelFontSize));
 
 
-            y += thickness + gap;
+            y += rowHeight;
 
             colorIndex++;
             if (colorIndex >= Parameters.MaxColours)
@@ -110,5 +130,53 @@ public partial class BarChartComponent
         svg.AppendLine("</svg>");
 
         return svg.ToString();
+    }
+
+    private double FillReferenceValue()
+    {
+        double result = 0;
+
+        if (Topics.Any())
+        {
+            result = Parameters.FillReference == ColumnFillReference.TotalOfAllValues
+                ? Topics.Sum(topic => topic.Value)
+                : Topics.Max(topic => topic.Value);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Top and Bottom give the label a line of its own, so it is never squeezed by the bar and
+    /// long names do not need shortening; Left and Right keep it on the same line as the bar.
+    /// </summary>
+    private bool LabelIsOnItsOwnLine() =>
+        LabelPlacement == ColumnLabelPlacement.Top ||
+        LabelPlacement == ColumnLabelPlacement.Bottom;
+
+    private string LabelMarkup(string label, double rowY, double barY, double textY,
+        double totalWidth, double innerPadding, double labelWidth, double thickness, int fontSize)
+    {
+        string result;
+
+        if (LabelPlacement == ColumnLabelPlacement.Top)
+        {
+            result = SvgHelper.Text(label, 0, rowY + fontSize, "start", fontSize);
+        }
+        else if (LabelPlacement == ColumnLabelPlacement.Bottom)
+        {
+            result = SvgHelper.Text(
+                label, 0, barY + thickness + innerPadding + fontSize, "start", fontSize);
+        }
+        else if (LabelPlacement == ColumnLabelPlacement.Left)
+        {
+            result = SvgHelper.Text(label, labelWidth - innerPadding, textY, "end", fontSize);
+        }
+        else
+        {
+            result = SvgHelper.Text(label, totalWidth - innerPadding, textY, "end", fontSize);
+        }
+
+        return result;
     }
 }

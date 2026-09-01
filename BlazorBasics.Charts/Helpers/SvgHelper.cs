@@ -40,15 +40,45 @@ internal static class SvgHelper
         return $"<rect x=\"{Format(x)}\" y=\"{Format(y)}\" width=\"{Format(width)}\" height=\"{Format(thickness)}\" fill=\"{color}\" />";
     }
 
-    internal static string RotatedText(string text, int x, int y, double angleDegrees, int estimatedWidth)
+    /// <summary>
+    /// Draws a text rotated around its anchor point. Negative angles read bottom to top and
+    /// positive angles read top to bottom; in both cases the text grows away from the anchor,
+    /// so the anchor is the edge closest to whatever the label belongs to.
+    /// </summary>
+    internal static string RotatedText(string text, double x, double y, double angleDegrees,
+        double estimatedWidth, int fontSize)
     {
         double angleRadians = ChartMathHelpers.CalculateRadious(angleDegrees);
-        double offsetX = estimatedWidth * 0.5 * Math.Cos(angleRadians);
-        int xCorrected = x + (int)Math.Round(offsetX);
+        double offsetAlongText = estimatedWidth * 0.5 * Math.Cos(angleRadians);
+        double offsetAcrossText = fontSize * 0.25 * Math.Sin(angleRadians);
+        double correctedX = x + offsetAlongText - offsetAcrossText;
+        string anchor = angleDegrees > 0 ? "start" : "end";
 
-        // Here we also format the doubles in the transform and escape the text
-        return $"<text x=\"{xCorrected}\" y=\"{y}\" text-anchor=\"end\" " +
-               $"transform=\"rotate({Format(angleDegrees)},{xCorrected},{y})\" " +
-               $"font-size=\"12\">{Escape(text)}</text>";
+        return RotatedTextAt(text, correctedX, y, angleDegrees, fontSize, anchor);
     }
+
+    /// <summary>
+    /// Draws a text rotated around the given point, with no centring of any kind: the point is
+    /// exactly where the baseline starts or ends, depending on the anchor.
+    /// </summary>
+    internal static string RotatedTextAt(string text, double x, double y, double angleDegrees,
+        int fontSize, string anchor)
+    {
+        return $"<text x=\"{Format(x)}\" y=\"{Format(y)}\" text-anchor=\"{anchor}\" " +
+               $"transform=\"rotate({Format(angleDegrees)},{Format(x)},{Format(y)})\" " +
+               $"font-size=\"{fontSize}\">{Escape(text)}</text>";
+    }
+
+    internal static string RotatedText(string text, int x, int y, double angleDegrees, int estimatedWidth) =>
+        RotatedText(text, x, y, angleDegrees, estimatedWidth, 12);
+    //{
+    //    double angleRadians = ChartMathHelpers.CalculateRadious(angleDegrees);
+    //    double offsetX = estimatedWidth * 0.5 * Math.Cos(angleRadians);
+    //    int xCorrected = x + (int)Math.Round(offsetX);
+
+    //    // Here we also format the doubles in the transform and escape the text
+    //    return $"<text x=\"{xCorrected}\" y=\"{y}\" text-anchor=\"end\" " +
+    //           $"transform=\"rotate({Format(angleDegrees)},{xCorrected},{y})\" " +
+    //           $"font-size=\"12\">{Escape(text)}</text>";
+    //}
 }
