@@ -2,185 +2,177 @@
 [![Nuget](https://img.shields.io/nuget/dt/BlazorBasics.Charts?style=for-the-badge)](https://www.nuget.org/packages/BlazorBasics.Charts)
 
 # Description
-Create charts simples from data. You can create a Pie Chart, Columns Chart, Bar Chart or Stacked Bar Chart.
-# How to use simple way
-Import the name space adding to _Imports.razor this line:
+Simple SVG charts for Blazor, with no JavaScript. It works with Blazor WebAssembly, Blazor Server and Blazor Web Apps on .NET 8, 9, 10 and 11.
+
+| Component | What it draws |
+|---|---|
+| `PieChartComponent` | Pie of percentages, with legend and hover labels |
+| `ColumnChartComponent` | Vertical columns, one per value |
+| `BarChartComponent` | Horizontal bars, one per value |
+| `StackedBarChartComponent` | One single bar split into the share each value takes of the whole |
+| `LineChartComponent` | One or more lines over the same X axis |
+| `RingPercentageComponent` | A ring filled up to a percentage |
+| `ColumnWithLineChartComponent` | Columns split in two values, with lines for their percentages |
+
+# Getting started
+Install the package:
 ```
+dotnet add package BlazorBasics.Charts
+```
+Add the namespaces to `_Imports.razor`. The components live in `BlazorBasics.Charts` and their data and parameters in `BlazorBasics.Charts.Models`:
+```razor
 @using BlazorBasics.Charts
+@using BlazorBasics.Charts.Models
 ```
-## Pie Chart
-Example about Pie Chart. Values can't be more than 100% about total values.
-``` razor
-<PieChartComponent DataSource=GetPieSegments />
 
-@code {
-    Task<IReadOnlyList<ChartSegment>> GetPieSegments()
-    {
-        IReadOnlyList<ChartSegment> segments = new();
-        ...
-        return Task.FromResult(segments);
-    } 
-}
-```
-Also you can set some parameters
+## Upgrading to 1.4
+Version 1.4 removes the options that never had any effect:
+* `PieChartParams` no longer has `Saturation` and `Luminosity`, nor their constructor parameters. A `PieChartParams` built with positional arguments after `height` must name them now, for example `new PieChartParams(150, 150, separationOffset: 20)`.
+* `ColumnWithLineChartParams` no longer has `Width` and `BackgroundColor`. Size the chart with `Height`, `BarWidth` and `Spacing`, and give it a background with the `style` or `class` of the component.
+
+## What every chart shares
+* **`Parameters`**: every component takes an optional `Parameters` object with its options. Left out, the defaults below are used.
+* **`class` and `style`**: any `class` or `style` attribute given to a component is added to its wrapper, so the page can size and place it.
+* **Size**: the charts are drawn in SVG. The sizes in the parameters are the size of the drawing, and the drawing scales to the width the page gives it, keeping its proportions. The exceptions are the pie and the ring, whose `Width` and `Height` are pixels.
+* **Colours**: when a value does not bring its own colour, the chart picks one from `ChartColors`. See [Personalize the colours](#personalize-the-colours).
+* **Clicks**: every chart made of parts says which one was clicked. See [Reacting to what the user clicks](#reacting-to-what-the-user-clicks).
+
+## The data: ChartSegment
+The pie, column, bar and stacked bar charts take their values as `ChartSegment`:
 ``` csharp
-public class PieChartParams
+public class ChartSegment
 {
-    public PieChartParams(int width = 150, int height = 150,
-        double saturation = 100.0, double luminosity = 50.0,
-        int separationOffset = 15, int separationOnSelectOffset = 15,
-        double delayTime = 0, string title = "",
-        IEnumerable<ChartColor> chartColours = null,
-        bool showLabels = false, double centerTextSeparationPercentage = 0.85,
-        bool separateBiggerByDefault = true, bool showBiggestLabel = false,
-        bool showLegend = true)
-    {
-        Width = width;
-        Height = height;
-        Saturation = saturation;
-        Luminosity = luminosity;
-        SeparationOffset = separationOffset;
-        SeparationOnSelectOffset = separationOnSelectOffset;
-        DelayTime = delayTime;
-        Title = title;
-        ChartColors = new(chartColours ?? ChartColourHelper
-            .InitializeColours(256, separationOffset));
-        ShowLabels = showLabels;
-        CenterTextSeparationPercentage = centerTextSeparationPercentage;
-        SeparateBiggerByDefault = separateBiggerByDefault;
-        ShowBiggestLabel = showBiggestLabel;
-        ShowLegend = showLegend;
-    }
-
-    public int Width { get; init; }
-    public int Height { get; init; }
-    public double Saturation { get; init; }
-    public double Luminosity { get; init; }
-    public double DelayTime { get; init; }
-    public int SeparationOffset { get; init; }
-    public int SeparationOnSelectOffset { get; init; }
-    public string Title { get; set; }
-    public List<ChartColor> ChartColors { get; set; }
-    public int MaxColours => ChartColors.Count;
-    public bool ShowLabels { get; set; }
-    public double CenterTextSeparationPercentage { get; set; }
-    public bool SeparateBiggerByDefault { get; init; }
-    public bool ShowBiggestLabel { get; set; }
-    public bool ShowLegend { get; set; }
+    public string Name { get; set; }          // label of the value
+    public double Value { get; set; }
+    public string ChartColor { get; set; }    // optional, its own colour instead of the palette
+    public string LabelColor { get; set; }    // pie only: colour of its text in the legend
+    public bool IsSelected { get; set; }      // pie only: the slice that starts pulled out
+    public Func<ChartSegment, string> SetTitleTopic { get; set; } // pie only: text of its label
 }
 ```
-Then you can do
+
+# Pie Chart
+Draws percentages. The values are read as percentages of the whole, so they must not add up to more than 100: if they do, the chart throws an `OverflowException`. Only one segment can have `IsSelected`, or it throws an `ArgumentException`.
+
 ``` razor
 <PieChartComponent DataSource=GetPieSegments Parameters=PieParams />
 
 @code {
-    PieChartParams PieParams = new PieChartParams(title: "Totals");
+    PieChartParams PieParams = new(title: "Requests");
 
     Task<IReadOnlyList<ChartSegment>> GetPieSegments()
     {
-        IReadOnlyList<ChartSegment> segments = new();
-        ...
+        IReadOnlyList<ChartSegment> segments =
+        [
+            new ChartSegment { Name = "Approved", Value = 62.5 },
+            new ChartSegment { Name = "Pending", Value = 25 },
+            new ChartSegment { Name = "Rejected", Value = 12.5 }
+        ];
         return Task.FromResult(segments);
-    } 
+    }
 }
 ```
 
-## Column or Bar Chart
-Example about Column or Bar Chart.
+### Component parameters
+| Parameter | Type | What it does |
+|---|---|---|
+| `DataSource` | `Func<Task<IReadOnlyList<ChartSegment>>>` | Gives the segments. It is called once, when the chart is first drawn. |
+| `Parameters` | `PieChartParams` | Options, see below. |
+| `ChildContent` | `RenderFragment<ChartSegment>` | Template for each entry of the legend. When given, it replaces the default legend, which also leaves out `Title`. |
+| `OnHover` | `Func<ChartSegment, string>` | Markup shown over the pie for the segment under the mouse. By default it is the text of the segment (see `SetTitleTopic`) or its value as a percentage. |
+| `OnClick` | `EventCallback<ChartSegment>` | Raised when a slice or its legend entry is clicked. |
+
+To change the data after the first draw, keep a reference to the component and call `UpdateData`:
 ``` razor
- <ColumnChartComponent Topics=Totals />
+<PieChartComponent @ref=Pie DataSource=GetPieSegments />
 
 @code {
-    IEnumerable<ChartSegment> Totals;
+    PieChartComponent Pie;
 
-    protected override void OnInitialized()
-    {
-        Totals =
-        [
-            new ChartSegment
-            {
-                Value = "1",
-                Name = "Total Requests"
-            },
-            ...
-        ];
-    }
+    void Refresh(IReadOnlyList<ChartSegment> segments) => Pie.UpdateData(segments);
 }
 ```
-Also you can set some parameters
+
+### PieChartParams
 ``` csharp
-public class ColumnsBarChartParams
-{
-    public const double VERTICAL_LABEL_ANGLE = -90;
-
-    public ColumnsBarChartParams(
-        string backgroundColour = "#D3D3D3",
-        int thickness = 20,
-        int dimension = 100,
-        bool showValues = false,
-        IEnumerable<ChartColor> chartColours = null,
-        int gap = 5,
-        int maxWidth = 600,
-        bool rotatedLabels = false,
-        double labelRotationAngle = VERTICAL_LABEL_ANGLE,
-        int labelFontSize = 12,
-        ColumnLabelPlacement? labelPlacement = null,
-        ColumnFillReference fillReference = ColumnFillReference.HighestValue)
-    {
-        BackgroundColour = backgroundColour;
-        Thickness = thickness;
-        Dimension = dimension;
-        MaxWidth = maxWidth;
-        ShowValues = showValues;
-        Gap = gap;
-        ChartColors = new(chartColours ?? ChartColourHelper
-            .InitializeColours(256, 30));
-        MaxWidth = maxWidth;
-        RotatedLabels = rotatedLabels;
-        LabelRotationAngle = labelRotationAngle;
-        LabelFontSize = labelFontSize;
-        LabelPlacement = labelPlacement;
-        FillReference = fillReference;
-    }
-
-    public string BackgroundColour { get; init; }
-    public int Thickness { get; init; }
-    public int Dimension { get; init; }
-    public int MaxWidth { get; init; }
-    public int Gap { get; init; }
-    public bool ShowValues { get; init; }
-    public bool RotatedLabels { get; init; }
-    public double LabelRotationAngle { get; init; }
-    public int LabelFontSize { get; init; }
-    public ColumnLabelPlacement? LabelPlacement { get; init; }
-    public ColumnFillReference FillReference { get; init; }
-    public List<ChartColor> ChartColors { get; set; }
-    public int MaxColours => ChartColors.Count;
-}
+new PieChartParams(
+    int width = 150, int height = 150,
+    int separationOffset = 15, int separationOnSelectOffset = 15,
+    double delayTime = 0, string title = "",
+    IEnumerable<ChartColor> chartColours = null,
+    bool showLabels = false, double centerTextSeparationPercentage = 0.85,
+    bool separateBiggerByDefault = true, bool showBiggestLabel = false,
+    bool showLegend = true)
 ```
-Then you can do
+| Option | Default | What it does |
+|---|---|---|
+| `Width`, `Height` | 150, 150 | Size of the pie, in pixels. |
+| `SeparationOffset` | 15 | Room left around the pie for a slice to move out. It also sets how far apart the hues of the default palette are. |
+| `SeparationOnSelectOffset` | 15 | Added to `SeparationOffset`, it gives how far a hovered or selected slice moves out. |
+| `DelayTime` | 0 | Milliseconds between one slice appearing and the next. With 0 the pie is drawn at once, without animation. |
+| `Title` | `""` | First line of the legend. |
+| `ChartColors` | generated | Palette of the slices, see [Personalize the colours](#personalize-the-colours). |
+| `ShowLabels` | `false` | Writes the label of every slice over the pie at all times. |
+| `CenterTextSeparationPercentage` | 0.85 | How far from the centre the labels are written, as a fraction of the radius. |
+| `SeparateBiggerByDefault` | `true` | Pulls out the biggest slice while nothing is hovered. A segment with `IsSelected` is pulled out instead of the biggest one. |
+| `ShowBiggestLabel` | `false` | Writes the label of the biggest slice while nothing is hovered. Ignored when `ShowLabels` is on. |
+| `ShowLegend` | `true` | Shows the legend, with the name and the percentage of every slice. |
+
+# Column and Bar Charts
+`ColumnChartComponent` draws one vertical column per value and `BarChartComponent` one horizontal bar per value. Both take the same data and the same parameters.
+
 ``` razor
+<ColumnChartComponent Topics=Totals />
 <BarChartComponent Topics=Totals Parameters=BarParams />
 
 @code {
-    ColumnsBarChartParams BarParams = new ColumnsBarChartParams();
+    ColumnsBarChartParams BarParams = new(showValues: true);
 
-    IEnumerable<ChartSegment> Totals;
-
-    protected override void OnInitialized()
-    {
-        Totals =
-        [
-            new ChartSegment
-            {
-                Value = "1",
-                Name = "Total Requests"
-            },
-            ...
-        ];
-    }
+    IEnumerable<ChartSegment> Totals =
+    [
+        new ChartSegment { Name = "Total Requests", Value = 120 },
+        new ChartSegment { Name = "Approved", Value = 86 },
+        new ChartSegment { Name = "Rejected", Value = 9 }
+    ];
 }
 ```
+
+### Component parameters
+| Parameter | Type | What it does |
+|---|---|---|
+| `Topics` | `IEnumerable<ChartSegment>` | The values, one column or bar each. |
+| `Parameters` | `ColumnsBarChartParams` | Options, see below. |
+| `OnClick` | `EventCallback<ChartSegment>` | Raised when a column or bar, the empty part of it or its label is clicked. |
+
+### ColumnsBarChartParams
+``` csharp
+new ColumnsBarChartParams(
+    string backgroundColour = "#D3D3D3",
+    int thickness = 20,
+    int dimension = 100,
+    bool showValues = false,
+    IEnumerable<ChartColor> chartColours = null,
+    int gap = 5,
+    int maxWidth = 600,
+    bool rotatedLabels = false,
+    double labelRotationAngle = ColumnsBarChartParams.VERTICAL_LABEL_ANGLE,
+    int labelFontSize = 12,
+    ColumnLabelPlacement? labelPlacement = null,
+    ColumnFillReference fillReference = ColumnFillReference.HighestValue)
+```
+| Option | Default | Column chart | Bar chart |
+|---|---|---|---|
+| `BackgroundColour` | `#D3D3D3` | Colour of the empty part of each column. | Colour of the empty part of each bar. |
+| `Thickness` | 20 | Width of each column. It is narrowed when the columns do not fit in `MaxWidth`. | Height of each bar. |
+| `Dimension` | 100 | Height of the drawing. | Width of the chart, as a percentage of its container. |
+| `MaxWidth` | 600 | Width of the drawing, shared out evenly between the columns. | Width of the drawing. |
+| `Gap` | 5 | Not used: the columns are spread evenly. | Space between one bar and the next. |
+| `ShowValues` | `false` | Writes the value above each column. | Writes the value after each bar. |
+| `ChartColors` | generated | Palette, used for the values without their own `ChartColor`. | Same. |
+| `RotatedLabels`, `LabelRotationAngle` | `false`, -90 | Rotate the labels, see [Vertical labels](#vertical-labels-on-a-column-chart). | Ignored. |
+| `LabelFontSize` | 12 | Size of the labels. | Size of the labels. |
+| `LabelPlacement` | `null` | See [Where the labels go](#where-the-labels-go). | Same. |
+| `FillReference` | `HighestValue` | See [How much gets filled](#how-much-of-the-column-or-bar-gets-filled). | Same. |
 
 ### How much of the column or bar gets filled
 `FillReference` decides what a completely filled shape means.
@@ -241,56 +233,50 @@ On **`BarChartComponent`**:
 ```
 The rotation is only applied by `ColumnChartComponent`; on a horizontal bar chart it would not help, so `BarChartComponent` ignores it and uses `LabelPlacement` alone.
 
-## Stacked Bar Chart
-Draws every value as a slice of one single bar, so what is read is the share each value takes of the whole rather than how the values compare to each other. It is the data of a pie chart drawn as a bar.
+# Stacked Bar Chart
+Draws every value as a slice of one single bar, so what is read is the share each value takes of the whole rather than how the values compare to each other. It is the data of a pie chart drawn as a bar, but the values do not need to be percentages.
 
 ``` razor
-<StackedBarChartComponent Topics=Totals />
+<StackedBarChartComponent Topics=Totals Parameters=StackedParams />
 
 @code {
-    IEnumerable<ChartSegment> Totals;
+    StackedBarChartParams StackedParams = new(
+        StackedBarOrientation.Vertical,
+        thickness: 46,
+        length: 320,
+        showValues: true,
+        labelSide: StackedBarLabelSide.After,
+        labelAlignment: StackedBarLabelAlignment.Start);
 
-    protected override void OnInitialized()
-    {
-        Totals =
-        [
-            new ChartSegment { Name = "Tagum", Value = 1204 },
-            new ChartSegment { Name = "Asuncion", Value = 486 },
-            ...
-        ];
-    }
+    IEnumerable<ChartSegment> Totals =
+    [
+        new ChartSegment { Name = "Tagum", Value = 1204 },
+        new ChartSegment { Name = "Asuncion", Value = 486 }
+    ];
 }
 ```
-Also you can set some parameters
-``` csharp
-public class StackedBarChartParams
-{
-    public StackedBarChartParams(
-        StackedBarOrientation orientation = StackedBarOrientation.Horizontal,
-        int thickness = 40,
-        int length = 600,
-        string backgroundColour = "#D3D3D3",
-        IEnumerable<ChartColor> chartColours = null,
-        bool showValues = false,
-        StackedBarLabelSide labelSide = StackedBarLabelSide.After,
-        StackedBarLabelAlignment labelAlignment = StackedBarLabelAlignment.Start,
-        int labelFontSize = 12,
-        double minimumLabelShare = 0.03,
-        double total = 0)
 
-    public StackedBarOrientation Orientation { get; init; }
-    public int Thickness { get; init; }
-    public int Length { get; init; }
-    public string BackgroundColour { get; init; }
-    public bool ShowValues { get; init; }
-    public StackedBarLabelSide LabelSide { get; init; }
-    public StackedBarLabelAlignment LabelAlignment { get; init; }
-    public int LabelFontSize { get; init; }
-    public double MinimumLabelShare { get; init; }
-    public double Total { get; init; }
-    public List<ChartColor> ChartColors { get; set; }
-    public int MaxColours => ChartColors.Count;
-}
+### Component parameters
+| Parameter | Type | What it does |
+|---|---|---|
+| `Topics` | `IEnumerable<ChartSegment>` | The values, one segment each. |
+| `Parameters` | `StackedBarChartParams` | Options, see below. |
+| `OnClick` | `EventCallback<ChartSegment>` | Raised when a segment or its label is clicked. |
+
+### StackedBarChartParams
+``` csharp
+new StackedBarChartParams(
+    StackedBarOrientation orientation = StackedBarOrientation.Horizontal,
+    int thickness = 40,
+    int length = 600,
+    string backgroundColour = "#D3D3D3",
+    IEnumerable<ChartColor> chartColours = null,
+    bool showValues = false,
+    StackedBarLabelSide labelSide = StackedBarLabelSide.After,
+    StackedBarLabelAlignment labelAlignment = StackedBarLabelAlignment.Start,
+    int labelFontSize = 12,
+    double minimumLabelShare = 0.03,
+    double total = 0)
 
 public enum StackedBarOrientation
 {
@@ -314,105 +300,88 @@ public enum StackedBarLabelAlignment
 ```
 * `Thickness` is how wide a vertical bar is, or how tall a horizontal one is. `Length` is how long it runs in the direction it stacks in.
 * The labels turn with the orientation and that is not configurable: they read horizontally beside a vertical bar and vertically above or below a horizontal one, which is the only way round they can be read in each case. `LabelSide` and `LabelAlignment` then work the same in both.
+* `LabelFontSize` sets the size of the labels.
 * `MinimumLabelShare` leaves out the label of any segment smaller than that share of the whole, given as a fraction, because there is no room to write one without it landing on its neighbours. The room reserved for the labels is measured only over the ones that are actually drawn, so leaving the small ones out also makes the chart smaller. Set it to zero to label every segment.
 * `ShowValues` writes the value across the middle of its own segment, in the contrasting colour, and only when the segment is long enough to hold it. It is ignored when the names already go `Inside`, so the two never collide.
 * `Total` is what the complete bar is worth. Left at zero the values are added together and the bar is always full; set to a known total, whatever the values do not account for stays as unfilled bar in `BackgroundColour`.
 
-``` razor
-<StackedBarChartComponent Topics=Totals Parameters=StackedParams />
-
-@code {
-    StackedBarChartParams StackedParams = new(
-        StackedBarOrientation.Vertical,
-        thickness: 46,
-        length: 320,
-        showValues: true,
-        labelSide: StackedBarLabelSide.After,
-        labelAlignment: StackedBarLabelAlignment.Start);
-}
-```
 The chart asks for its own size, which for a vertical bar is narrow and tall. Its wrapper carries the `stacked-bar-chart` class plus `is-vertical` or `is-horizontal`, so stretching it, or leaving it alone, is up to the css of the page:
 ``` css
 .my-card ::deep .stacked-bar-chart.is-horizontal svg { width: 100%; height: auto; }
 .my-card ::deep .stacked-bar-chart.is-vertical svg { width: auto; max-width: 100%; }
 ```
 
-### Personalize Charts
-All chart automatic set the colours depending in how many items have the data. But also you can personalize colours in the charts using the property ChartColours.
-``` Razor
+# Personalize the colours
+The pie, column, bar and stacked bar charts pick the colour of every value from their `ChartColors`, in order. Left out, a palette is generated. A `ChartSegment` with its own `ChartColor` keeps it.
+``` razor
 @code {
-    ColumnsBarChartParams BarParams = new ColumnsBarChartParams();
+    static readonly List<ChartColor> ChartColours =
+    [
+        new("#2E3092"),
+        new("#00AEEF"),
+        new("#2E78E8"),
+        new("#03B15E"),
+        new("#F98316"),
+        new("#D94D4D")
+    ];
 
-    List<ChartColor> ChartColours =
-       [
-            new("#2E3092"),
-            new("#00AEEF"),
-            new("#EDF5FF"),
-            new("#2E78E8"),
-            new("#0C5FBA"),
-            new("#D1E7FF"),
-            new("#03B15E"),
-            new("#E6FFEA"),
-            new("#CEEED3"),
-            new("#F98316"),
-            new("#FFF2DA"),
-            new("#FFD8B1"),
-            new("#D94D4D"),
-            new("#FFE7E7"),
-            new("#FFCFCF")
-       ];
-
-    protected override void OnInitialized()
-    {
-        BarParams = new ColumnsBarChartParams(chartColours: ChartColours);
-        // or BarParams.ChartColors = ChartColours;
-    }
+    ColumnsBarChartParams BarParams = new(chartColours: ChartColours);
+    // or BarParams.ChartColors = ChartColours;
 }
 ```
-This is aplicable for Pie Chart, Column Chart, Bar Chart and Stacked Bar Chart. Color can be rgb(0,0,0), HEX #000000 or hsl(1,80,40).
+A colour can be written as `#000000`, `rgb(0,0,0)` or `hsl(1,80%,40%)`.
 
-A `ChartColor` can also be given the colour of the text written over it, which is what the Stacked Bar Chart uses for the labels and values it writes inside a segment. With one colour only, the contrasting one is worked out for you.
+A `ChartColor` can also be given the colour of the text written over it, which is what the pie legend and the stacked bar use for the labels and values they write over a colour. With one colour only, the contrasting one is worked out for you.
 ``` csharp
 new ChartColor("#2E3092", "#FFFFFF")   // background and text over it
 new ChartColor("#2E3092")              // text colour worked out from the background
 ```
 
-## Line Chart
-Example about Line Chart.
+# Line Chart
+Draws one or more series over the same X axis. The values are given as text and parsed with `ParsingCulture`.
+
 ``` razor
- <LineChartComponent Data=ChartData ParsingCulture=CultureInfo.InvariantCulture/>
+<LineChartComponent Data=ChartData Parameters=LineParams ParsingCulture=CultureInfo.InvariantCulture />
 
 @code {
-    private LineChartData ChartData = new(new List<LineData>
-    {
-        new LineData("Line 1", "green", new List<string> { "10", "50", "15", "100", "20", "30", "25" }),
-        new LineData("Line 2", "blue",  new List<string> { "0",  "5",  "50", "33",  "33", "8",  "12" }),
-        new LineData("Line 3", "red",   new List<string> { "5",  "50", "10", "33",  "8",  "12", "15" })
-    });
+    LineChartParams LineParams = new(showLegend: true, pointOptions: new LineChartPointOptions(visibleAllPoints: true));
+
+    LineChartData ChartData = new(
+        [
+            new LineData("Line 1", "green", ["10", "50", "15", "100", "20", "30", "25"]),
+            new LineData("Line 2", "blue",  ["0",  "5",  "50", "33",  "33", "8",  "12"]),
+            new LineData("Line 3", "red",   ["5",  "50", "10", "33",  "8",  "12", "15"])
+        ],
+        xLabels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
 }
 ```
-Example about Line Chart with event.
-``` razor
- <LineChartComponent Data=ChartData OnLoading=CharLoading ParsingCulture=CultureInfo.InvariantCulture />
 
-@code {
-    private LineChartData ChartData = new(new List<LineData>
-    {
-        new LineData("Line 1", "green", new List<string> { "10", "50", "15", "100", "20", "30", "25" }),
-        new LineData("Line 2", "blue",  new List<string> { "0",  "5",  "50", "33",  "33", "8",  "12" }),
-        new LineData("Line 3", "red",   new List<string> { "5",  "50", "10", "33",  "8",  "12", "15" })
-    });
+### Component parameters
+| Parameter | Type | What it does |
+|---|---|---|
+| `Data` | `LineChartData` | The series and the axis labels. |
+| `Parameters` | `LineChartParams` | Options, see below. |
+| `ParsingCulture` | `CultureInfo` | Culture used to read the values. Defaults to `CultureInfo.InvariantCulture`. |
+| `OnLoading` | `EventCallback<bool>` | Raised with `true` when the chart starts working out a new set of data, and with `false` when it is drawn. |
+| `OnPointClick` | `EventCallback<LineChartPoint>` | Raised when a dot is clicked. |
+| `OnLegendClick` | `EventCallback<LineData>` | Raised when a series of the legend is clicked. |
 
-    bool IsChartLoading;
-    void CharLoading(bool state)
-    {
-        IsChartLoading = state;
-    }
-}
-```
-Also you can set some parameters
+The chart is worked out again only when `Data` is given a **new instance**. Changing the values inside the same `LineChartData`, or changing `Parameters` alone, does not redraw it.
+
+### LineChartData and LineData
 ``` csharp
-public class LineChartParams(
+new LineChartData(
+    IEnumerable<LineData> data,
+    IEnumerable<string> xLabels = null,   // one label per value; when left out the values are numbered from 1
+    IEnumerable<string> yLabels = null)   // labels of the Y axis, spread evenly from bottom to top
+
+new LineData(string name, string color, IEnumerable<string> values)
+```
+Series with fewer values than the longest one are completed with zeros.
+
+### LineChartParams
+``` csharp
+new LineChartParams(
     int width = 600,
     int height = 300,
     string backgroundColor = "transparent",
@@ -435,216 +404,170 @@ public class LineChartParams(
     int maxPointPerLine = 50,
     bool showLoading = true,
     bool showXLines = true,
-    bool showYLines = true
-    )
-{
-    public int Width => width;
-    public int Height => height;
-    public string BackgroundColor => backgroundColor;
-    public string AxisStroke => axisStroke;
-    public int AxisWidth => axisWidth;
-    public string GridLineStroke => gridLineStroke;
-    public int GridWidth => gridWidth;
-    public string LineSeriesFill => lineSeriesFill;
-    public int LineSeriesWidth => lineSeriesWidth;
-    public int DotRadius => dotRadius;
-    public int StepsY => stepsY;
-    public bool ShowX => showX;
-    public bool ShowY => showY;
-    public bool ShowLegend => showLegend;
-    public bool RotatedXLabels => rotatedXLabels;
-    public double RotationAngleXLabel
-    {
-        get
-        {
-            if (rotationAngleXLabel < 0)
-                throw new ArgumentException($"Must be positive", nameof(RotationAngleXLabel));
-            if (rotationAngleXLabel > 90)
-                throw new ArgumentException($"Must be less than 90", nameof(RotationAngleXLabel));
-            return rotationAngleXLabel;
-        }
-    }
-    public Func<string, string> FormatterLabelPopup => formatterLabelPopup;
-    public Func<LineData, string> LegendLabel => legendLabel;
-    public LineChartPointOptions PointOptions { get; } = pointOptions ?? new LineChartPointOptions();
-    public int MaxPointPerLine => maxPointPerLine;
-    public bool ShowLoading => showLoading;
-    public bool ShowYLines => showYLines;
-    public bool ShowXLines => showXLines;
-}
+    bool showYLines = true)
+```
+| Option | Default | What it does |
+|---|---|---|
+| `Width`, `Height` | 600, 300 | Size of the drawing. It scales to the width of its container. |
+| `BackgroundColor` | `transparent` | Background of the chart. |
+| `AxisStroke`, `AxisWidth` | `black`, 2 | Colour and width of the axes. |
+| `GridLineStroke`, `GridWidth` | `black`, 1 | Colour and width of the grid lines. |
+| `LineSeriesFill` | `none` | Fill under the lines. |
+| `LineSeriesWidth` | 1 | Width of the lines. |
+| `DotRadius` | 4 | Radius of the dots. |
+| `StepsY` | 3 | How many steps the Y axis is divided in, when no `yLabels` are given. |
+| `ShowX`, `ShowY` | `true` | Show the labels of each axis, together with their grid lines. |
+| `ShowXLines` | `true` | Draws a **vertical** grid line at every X value. |
+| `ShowYLines` | `true` | Draws a **horizontal** grid line at every step of the Y axis. |
+| `ShowLegend` | `true` | Shows the legend under the chart. |
+| `RotatedXLabels` | `false` | Rotates the X labels. They are also rotated on their own when they do not fit. When they do not fit even rotated, only five are written: the first, the last, the middle one and the two halfway between. |
+| `RotationAngleXLabel` | 45 | Angle of the rotated X labels, from 0 to 90. Any other value throws an `ArgumentException`. |
+| `FormatterLabelPopup` | `null` | Turns the value of a clicked dot into the markup of its popup. By default the value is written in bold. |
+| `LegendLabel` | `null` | Turns a series into the markup of its legend entry. By default a dot of its colour and its name. |
+| `PointOptions` | see below | Which dots are drawn. |
+| `MaxPointPerLine` | 50 | Most dots drawn per series. A longer series keeps one value out of every few, plus the last one, so it draws faster; the X labels and their grid lines still follow every value. Set it to the number of values to draw them all. |
+| `ShowLoading` | `true` | Shows a spinner while the chart is worked out. |
 
-public class LineChartPointOptions(
+### LineChartPointOptions
+``` csharp
+new LineChartPointOptions(
     bool visibleAllPoints = false,
     bool visibleMaxPoint = true,
     bool visibleMinPoint = true,
     bool visibleMaxPointLine = false,
-    bool visibleMinPointLine = false
-)
-{
-    public bool VisibleAllPoints => visibleAllPoints;
-    public bool VisibleMaxPoint => visibleMaxPoint;
-    public bool VisibleMinPoint => visibleMinPoint;
-    public bool VisibleMaxPointLine => visibleMaxPointLine;
-    public bool VisibleMinPointLine => visibleMinPointLine;
-}
+    bool visibleMinPointLine = false)
 ```
-Then you can do
+| Option | Default | What it does |
+|---|---|---|
+| `VisibleAllPoints` | `false` | Draws a dot at every value. |
+| `VisibleMaxPoint`, `VisibleMinPoint` | `true` | When not every dot is drawn, draws the highest and the lowest dot of each series. |
+| `VisibleMaxPointLine`, `VisibleMinPointLine` | `false` | Draws a dashed line across the chart at the highest value of all series (green) and at the lowest (red). |
+
+### What the user can do with it
+* Clicking a dot opens a popup with its value, written by `FormatterLabelPopup`. Clicking the popup closes it.
+* Clicking a series in the legend leaves only that series on the chart, with all its dots. Clicking it again, or clicking anywhere else on the chart, brings every series back.
+
+### A popup of your own
 ``` razor
- <LineChartComponent Data=ChartData Params=LineParams ParsingCulture=CultureInfo.InvariantCulture />
+<LineChartComponent Data=ChartData Parameters=LineParams />
 
 @code {
-    LineChartParams LineParams = new LineChartParams();
-
-    private LineChartData ChartData = new(new List<LineData>
-    {
-        new LineData("Line 1", "green", new List<string> { "10", "50", "15", "100", "20", "30", "25" }),
-        new LineData("Line 2", "blue",  new List<string> { "0",  "5",  "50", "33",  "33", "8",  "12" }),
-        new LineData("Line 3", "red",   new List<string> { "5",  "50", "10", "33",  "8",  "12", "15" })
-    });
-
-    protected override void OnInitialized()
-    {
-        LineParams= new(formaterLabelPopup: GetSelectedPointLabelMarkup);
-    }
-
-    private string GetSelectedPointLabelMarkup(string value)
-    {
-        StringBuilder builder = new StringBuilder();
-        builder.Append("<div style='");
-        builder.Append("pointer-events: none;");
-        builder.Append("background-color: blue;");
-        builder.Append("box-shadow: 0 2px 6px rgba(0,0,0,0.2);");
-        builder.Append("padding: 6px 12px;");
-        builder.Append("border-radius: 6px;");
-        builder.Append("text-align: center;");
-        builder.Append("'>");
-        builder.Append($"<strong  style='");
-        builder.Append("color: white;");
-        builder.Append("font-size: medium;");
-        builder.Append("font-weight: bold;");
-        builder.Append($"'>");
-        builder.Append($"{value}");
-        builder.Append($"</strong>");
-        builder.Append("</div>");
-        return builder.ToString();
-    }
+    LineChartParams LineParams = new(formatterLabelPopup: value =>
+        $"<div style='background-color: blue; color: white; padding: 6px 12px; border-radius: 6px;'><strong>{value}</strong></div>");
 }
 ```
-* RotationAngleXLabel must be between 0 and 90 degress to keep good view. Paramter outside will generate an ArgumentException.
-## Ring Percentage
-Example about Line Chart.
+
+# Ring Percentage
+A ring filled up to a percentage, with the percentage written in the middle.
 ``` razor
- <RingPercentageComponent Percentage=69 />
+<RingPercentageComponent Percentage=69 />
+<RingPercentageComponent Percentage=33 Parameters="new RingParams(width: 100, height: 100)" />
 ```
-Also you can set some parameters
+
+### Component parameters
+| Parameter | Type | What it does |
+|---|---|---|
+| `Percentage` | `int` | How much of the ring is filled, from 0 to 100. |
+| `Parameters` | `RingParams` | Options, see below. |
+
+### RingParams
 ``` csharp
-public class RingParams
-{
-    public int Width { get; init; }
-    public int Height { get; init; }
-    public double FontSizeRatio { get; init; }
-    public string LabelColor { get; init; }
-    public string FromColor { get; init; }
-    public string ToColor { get; init; }
-    public string CircunferenceColour { get; init; }
-    public int StrokeWidth { get; init; }
+new RingParams(
+    int width = 120, int height = 120,
+    double fontPerspective = 3.5,
+    string labelColor = "green",
+    string fromColor = "#FFD700", string toColor = "#B22222",
+    string circunferenceColour = "#eee",
+    int strokeWidth = 10)
+```
+| Option | Default | What it does |
+|---|---|---|
+| `Width`, `Height` | 120, 120 | Size of the ring, in pixels. Zero leaves that side to the css of the page. |
+| `FontSizeRatio` (`fontPerspective`) | 3.5 | Size of the percentage text, as `Width` divided by this ratio. Without a `Width`, `Height` is used, and without either, 120. |
+| `LabelColor` | `green` | Colour of the percentage text. |
+| `FromColor`, `ToColor` | `#FFD700`, `#B22222` | The filled part is a gradient from the first colour, at the top, to the second, at the bottom. |
+| `CircunferenceColour` | `#eee` | Colour of the empty part of the ring. |
+| `StrokeWidth` | 10 | Thickness of the ring. |
 
-    public RingParams(int width = 0, int height = 0, double fontPerspective = 3.5, string labelColor = "green",
-        string fromColor = "#FFD700", string toColor = "#B22222", string circunferenceColour = "#eee", int strokeWidth = 10)
-    {
-        Width = width;
-        Height = height;
-        FontSizeRatio = fontPerspective;
-        LabelColor = labelColor;
-        FromColor = fromColor;
-        ToColor = toColor;
-        CircunferenceColour = circunferenceColour;
-        StrokeWidth = strokeWidth;
-    }
-}
-```
-Then you can do
+# Column with lines
+Draws one column per item, split in a primary and a secondary value, with lines for the percentages:
+* the **grand total** line places each item at the share it takes of the sum of all items;
+* the **primary** and **secondary** lines place each item at the share its primary or secondary value takes of that item.
+
+The columns are as tall as their total compared with the highest item.
+
 ``` razor
- <RingPercentageComponent Percentage=33 Parameters="new RingParams(width: 100)" />
-```
-## Column with lines
-Example about ColumnWithLine Chart.
-``` razor
- <ColumnWithLineChartComponent Data=ChartData />
+<ColumnWithLineChartComponent Data=ChartData Parameters=WithLineParams />
 
 @code {
-    private ColumnWithLineChartData ChartData = new(new List<ColumnDataItem>
-    {
-        new("ENE",200000,184615) , 
-        new("",0,0) { Label = "FEB", PrimaryValue = 300000, SecondaryValue = 245454 },  
-        new("",0,0) { Label = "MAR", PrimaryValue = 400000, SecondaryValue = 289655 },  
-        new("",0,0) { Label = "ABR", PrimaryValue = 500000, SecondaryValue = 319672 },  
-        new("",0,0) { Label = "MAY", PrimaryValue = 600000, SecondaryValue = 452830 },  
-        new("",0,0) { Label = "JUN", PrimaryValue = 700000, SecondaryValue = 466666 },  
-    })
-    {
-         PrimaryLegend = "Active Users",
-         SecondaryLegend = "Non Active Users",
-         Title = "Total users" 
-    };
-}
+    ColumnWithLineChartParams WithLineParams = new() { PrimaryColor = "green", SecondaryColor = "blue" };
 
-```
-Also you can set some parameters
-``` csharp
-public class ColumnWithLineChartParams
-{
-    public int Width { get; set; } = 800;
-    public int Height { get; set; } = 500;
-    public string BackgroundColor { get; set; } = "transparent";
-    public int BarWidth { get; set; } = 15;
-    public int MinBarHeight { get; set; } = 150;
-    public int Spacing { get; set; } = 15;
-    public string PrimaryColor { get; set; } = "#4e79a7";
-    public string SecondaryColor { get; set; } = "#f28e2b";
-    public string GrandTotalLineColor { get; set; } = "#e15759";
-    public string PrimaryPercentageLineColor { get; set; } = "#59a84b";
-    public string SecondaryPercentageLineColor { get; set; } = "#ed49ff";
-    public bool ShowTitle { get; set; } = true;
-    public bool ShowLegend { get; set; } = true;
-    public bool ShowGranTotal { get; set; } = true;
-    public bool ShowPrimaryValues { get; set; } = true;
-    public bool ShowSecondaryValues { get; set; } = false;
-    public Func<ColumnDataItem, string> BigTotalValueLabelFormatter { get; set; }
-    public Func<ColumnDataItem, string> PrimaryValueLabelFormatter { get; set; }
-    public Func<ColumnDataItem, string> SecondaryValueLabelFormatter { get; set; }
-    public Func<ColumnDataItem, string> BottomLabelFormatter { get; set; }
-    public Func<ColumnDataItem, string> TooltipFormatter { get; set; }
-}
-```
-Then you can do
-``` razor
-  <ColumnWithLineChartComponent Data=ChartData Parameters=WithLineChartParams />
-  @code {
-    ColumnWithLineChartParams WithLineChartParams = new();
-
-    protected override void OnInitialized()
+    ColumnWithLineChartData ChartData = new(
+    [
+        new("JAN", 200000, 184615),
+        new("FEB", 300000, 245454),
+        new("MAR", 400000, 289655)
+    ])
     {
-        WithLineChartParams.PrimaryColor = "green";
-        WithLineChartParams.SecondaryColor = "blue";
-    }
-
-    private ColumnWithLineChartData ChartData = new(new List<ColumnDataItem>
-    {
-        new("ENE",200000,184615) , 
-        new("",0,0) { Label = "FEB", PrimaryValue = 300000, SecondaryValue = 245454 },  
-        new("",0,0) { Label = "MAR", PrimaryValue = 400000, SecondaryValue = 289655 },  
-        new("",0,0) { Label = "ABR", PrimaryValue = 500000, SecondaryValue = 319672 },  
-        new("",0,0) { Label = "MAY", PrimaryValue = 600000, SecondaryValue = 452830 },  
-        new("",0,0) { Label = "JUN", PrimaryValue = 700000, SecondaryValue = 466666 },  
-    })
-    {
-         PrimaryLegend = "Active Users",
-         SecondaryLegend = "Non Active Users",
-         Title = "Total users" 
+        Title = "Total users",
+        PrimaryLegend = "Active Users",
+        SecondaryLegend = "Non Active Users"
     };
 }
 ```
+
+### Component parameters
+| Parameter | Type | What it does |
+|---|---|---|
+| `Data` | `ColumnWithLineChartData` | The items, the title and the names of the two values. |
+| `Parameters` | `ColumnWithLineChartParams` | Options, see below. |
+| `OnItemClick` | `EventCallback<ColumnDataItem>` | Raised when a column or a point of a line is clicked. |
+| `OnPointClick` | `EventCallback<ColumnWithLinePoint>` | Raised when a point of a line is clicked, saying which line. |
+
+### ColumnWithLineChartData and ColumnDataItem
+``` csharp
+public class ColumnWithLineChartData(IEnumerable<ColumnDataItem> data)
+{
+    public string Title { get; set; }
+    public string PrimaryLegend { get; set; }     // name of the primary value
+    public string SecondaryLegend { get; set; }   // name of the secondary value
+    public IEnumerable<ColumnDataItem> Data { get; set; }
+}
+
+public class ColumnDataItem(string label, decimal primaryValue, decimal secondaryValue)
+{
+    public string Label { get; set; }
+    public decimal PrimaryValue { get; set; }
+    public decimal SecondaryValue { get; set; }
+    public decimal Value => PrimaryValue + SecondaryValue;
+}
+```
+
+### ColumnWithLineChartParams
+Every option is a property with a setter, to be given with an object initializer.
+
+| Option | Default | What it does |
+|---|---|---|
+| `Height` | 500 | Height of the drawing. The columns take half of it, but never less than `MinBarHeight`. |
+| `MinBarHeight` | 150 | Least height of the columns. |
+| `BarWidth` | 15 | Width of each column. |
+| `Spacing` | 15 | Space between one column and the next. The width of the drawing follows from the number of items, `BarWidth` and `Spacing`, and it scales to its container. |
+| `PrimaryColor`, `SecondaryColor` | `#4e79a7`, `#f28e2b` | Colours of the two parts of each column. |
+| `GrandTotalLineColor` | `#e15759` | Colour of the grand total line. |
+| `PrimaryPercentageLineColor`, `SecondaryPercentageLineColor` | `#59a84b`, `#ed49ff` | Colours of the primary and secondary lines. |
+| `ShowTitle` | `true` | Writes `Title` above the chart. |
+| `ShowLegend` | `true` | Shows the legend. |
+| `ShowGranTotal` | `true` | Draws the grand total line, with its percentage written over every point. |
+| `ShowPrimaryValues` | `true` | Draws the primary line. |
+| `ShowSecondaryValues` | `false` | Draws the secondary line. |
+| `BigTotalValueLabelFormatter` | `null` | Text over each point of the grand total line. By default its percentage. |
+| `PrimaryValueLabelFormatter`, `SecondaryValueLabelFormatter` | `null` | Text over each point of the primary or secondary line. By default its percentage. |
+| `BottomLabelFormatter` | `null` | Text under each column. By default the `Label` of the item. |
+| `TooltipFormatter` | `null` | Markup of the tooltip shown when an item is clicked. By default its label and both values. |
+
+### What the user can do with it
+* Clicking a column or a point shows the tooltip of its item. Clicking a point also writes its value.
+* Clicking the primary or the secondary entry of the legend writes the values over every point of that line. Clicking anywhere else on the chart hides them.
 
 # Reacting to what the user clicks
 Every chart made of parts tells you which one was clicked, so the page around it can react. The callback of each chart carries the type that chart works with, and nothing happens at all when no handler is given.
@@ -691,7 +614,7 @@ public class LineChartPoint
 {
     public string SeriesName { get; }
     public string Colour { get; }
-    public int Index { get; }   // position in the series, counting from zero
+    public int Index { get; }   // position in the series, counting from zero, also when MaxPointPerLine leaves values out
     public string Value { get; }  // the value as it was given, before being parsed
     public string Label { get; }  // the X axis label at that position, when there is one
 }
