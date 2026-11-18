@@ -1,9 +1,7 @@
 ﻿namespace BlazorBasics.Charts.Models;
 public class ColumnWithLineChartParams
 {
-    public int Width { get; set; } = 800;
     public int Height { get; set; } = 500;
-    public string BackgroundColor { get; set; } = "transparent";
     public int BarWidth { get; set; } = 15;
     public int MinBarHeight { get; set; } = 150;
     public int Spacing { get; set; } = 15;
