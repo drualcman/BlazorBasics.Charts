@@ -5,7 +5,8 @@ public class LineChartPointOptions(
     bool visibleMaxPoint = true,
     bool visibleMinPoint = true,
     bool visibleMaxPointLine = false,
-    bool visibleMinPointLine = false
+    bool visibleMinPointLine = false,
+    Func<LineChartPoint, string> pointColour = null
 )
 {
     public bool VisibleAllPoints => visibleAllPoints;
@@ -13,4 +14,5 @@ public class LineChartPointOptions(
     public bool VisibleMinPoint => visibleMinPoint;
     public bool VisibleMaxPointLine => visibleMaxPointLine;
     public bool VisibleMinPointLine => visibleMinPointLine;
+    public Func<LineChartPoint, string> PointColour => pointColour;
 }

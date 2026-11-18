@@ -108,6 +108,7 @@ public partial class LineChartComponent
 
                     double minX = 1;
                     double maxX = maxValuesCount;
+                    List<string> xLabels = Data.XLabels?.ToList() ?? [];
 
                     await Task.Run(() =>
                     {
@@ -127,7 +128,10 @@ public partial class LineChartComponent
                                     : 0;
                                 allYValuesConcurrent.Add(y);
                                 string label = j < originalCount ? valueList[j] : "0";
-                                points.Add(new ChartPoint(x, y, label));
+                                points.Add(new ChartPoint(x, y, label)
+                                {
+                                    Detail = DescribePoint(input, j, label, xLabels)
+                                });
                             }
 
                             List<ChartPoint> reducedPoints = ReduceResolution(points, Parameters.MaxPointPerLine);
@@ -154,7 +158,7 @@ public partial class LineChartComponent
                     }
                     else
                     {
-                        MaxYLabelWidth = 30;
+                        MaxYLabelWidth = GeneratedYLabelWidth(allYValues);
                     }
 
                     // Compute raw min/max and pad
@@ -245,7 +249,7 @@ public partial class LineChartComponent
                     // Now create coordinates handler with the same final minY/maxY and final plot sizes
                     LineChartCoordinatesHandler = new LineChartCoordinatesHandler(minX, maxX, minY, maxY, PlotWidth, MarginLeft, MarginTop, PlotHeight, ParsingCulture);
                     LineChartXHandler = new LineChartXHandler(AxisGap, NeedsRotation, Parameters.RotationAngleXLabel, PlotWidth, maxX, MarginTop, MarginLeft, ExtraBottomForRotatedLabels, Parameters.Height, Data.Data, Data.XLabels, ChartData, LineChartCoordinatesHandler, Parameters.ShowXLines, ParsingCulture);
-                    LineChartMarkupHandler = new LineChartMarkupHandler(Parameters.FormatterLabelPopup, Parameters.LegendLabel);
+                    LineChartMarkupHandler = new LineChartMarkupHandler(Parameters.PointPopup, Parameters.LegendLabel);
 
                     Console.WriteLine($"[DEBUG] PlotWidth={PlotWidth}, PlotHeight={PlotHeight}, MarginBottom={MarginBottom}, ExtraBottomForRotatedLabels={ExtraBottomForRotatedLabels}, minY={minY}, maxY={maxY}");
 
@@ -353,21 +357,35 @@ public partial class LineChartComponent
         }
 
         if (OnPointClick.HasDelegate)
-            await OnPointClick.InvokeAsync(ClickedPoint(serie, point));
+            await OnPointClick.InvokeAsync(point.Detail);
     }
 
-    /// <summary>
-    /// Turns the point the chart drew back into what the consumer handed over. The X of a point is
-    /// its position in the series counting from one, which is what gives the index back even for
-    /// the highest and the lowest point of a series.
-    /// </summary>
-    LineChartPoint ClickedPoint(LineSeries serie, ChartPoint point)
+    LineChartPoint DescribePoint(LineData serie, int index, string value, List<string> xLabels)
     {
-        int index = (int)point.X - 1;
-        List<string> labels = Data?.XLabels?.ToList() ?? [];
-        string label = index >= 0 && index < labels.Count ? labels[index] : null;
+        string serieColour = string.IsNullOrEmpty(serie.Color) ? "" : serie.Color;
+        string label = index < xLabels.Count ? xLabels[index] : null;
+        LineChartPoint described = new LineChartPoint(serie.Name, serieColour, index, value, label);
 
-        return new LineChartPoint(serie.Name, serie.Color, index, point.Value, label);
+        string pointColour = Parameters.PointOptions.PointColour?.Invoke(described);
+        if (!string.IsNullOrWhiteSpace(pointColour))
+        {
+            described = new LineChartPoint(serie.Name, pointColour, index, value, label);
+        }
+
+        return described;
+    }
+
+    static string DotColour(LineSeries serie, ChartPoint point) => point.Detail?.Colour ?? serie.Color;
+
+    static int GeneratedYLabelWidth(List<double> values)
+    {
+        const double FONT_WIDTH = 6.5;
+        const int DECIMALS_LENGTH = 3;
+        const double ROUNDED_TICKS_ALLOWANCE = 2;
+        double largest = values.Count > 0 ? values.Max(value => Math.Abs(value)) : 0;
+        int integerLength = Math.Ceiling(largest * ROUNDED_TICKS_ALLOWANCE).ToString(CultureInfo.InvariantCulture).Length;
+        int signLength = values.Any(value => value < 0) ? 1 : 0;
+        return (int)((integerLength + DECIMALS_LENGTH + signLength) * FONT_WIDTH) + 10;
     }
 
     async Task OnSelectLegend(LineSeries serie)

@@ -27,7 +27,7 @@ internal class LineChartCoordinatesHandler
     internal ChartPoint GetCoordinates(ChartPoint point)
     {
         (int x, int y) cooredinates = SetCoordinated(point.X, point.Y);
-        return new ChartPoint(cooredinates.x, cooredinates.y, point.Value);
+        return new ChartPoint(cooredinates.x, cooredinates.y, point.Value) { Detail = point.Detail };
     }
 
     internal string GetPoints(IEnumerable<ChartPoint> points)

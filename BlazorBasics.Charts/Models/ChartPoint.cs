@@ -5,6 +5,7 @@ internal class ChartPoint
     public double X { get; set; }
     public double Y { get; set; }
     public string Value { get; set; }
+    public LineChartPoint Detail { get; set; }
 
     public ChartPoint(double x, double y, string value)
     {

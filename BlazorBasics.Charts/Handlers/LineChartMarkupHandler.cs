@@ -1,32 +1,36 @@
-﻿namespace BlazorBasics.Charts.Handlers;
+﻿using System.Net;
+
+namespace BlazorBasics.Charts.Handlers;
 internal class LineChartMarkupHandler
 {
-    private readonly Func<string, string> FormatterLabelPopup;
+    private readonly Func<LineChartPoint, string> PointPopup;
     private readonly Func<LineData, string> LegendLabel;
 
-    public LineChartMarkupHandler(Func<string, string> formatterLabelPopup, Func<LineData, string> legendLabel)
+    public LineChartMarkupHandler(Func<LineChartPoint, string> pointPopup, Func<LineData, string> legendLabel)
     {
-        FormatterLabelPopup = formatterLabelPopup;
+        PointPopup = pointPopup;
         LegendLabel = legendLabel;
     }
 
-    internal MarkupString GetSelectedPointLabelMarkup(ChartPoint SelectedPoint)
+    internal MarkupString GetSelectedPointLabelMarkup(LineChartPoint selectedPoint)
     {
         StringBuilder builder = new StringBuilder();
-        if(SelectedPoint is not null)
+        if(selectedPoint is not null)
         {
-            if(FormatterLabelPopup is null)
+            if(PointPopup is null)
             {
-                builder.Append($"<strong style='");
-                builder.Append("font-size: medium;");
-                builder.Append("font-weight: bold;");
-                builder.Append("text-align: center;");
-                builder.Append($"'>");
-                builder.Append($"{SelectedPoint.Value}");
-                builder.Append($"</strong>");
+                if(!string.IsNullOrEmpty(selectedPoint.Label))
+                {
+                    builder.Append("<span style='display: block; font-size: small; text-align: center;'>");
+                    builder.Append(WebUtility.HtmlEncode(selectedPoint.Label));
+                    builder.Append("</span>");
+                }
+                builder.Append("<strong style='display: block; font-size: medium; font-weight: bold; text-align: center;'>");
+                builder.Append(WebUtility.HtmlEncode(selectedPoint.Value));
+                builder.Append("</strong>");
             }
             else
-                builder.Append(FormatterLabelPopup(SelectedPoint.Value));
+                builder.Append(PointPopup(selectedPoint));
         }
         return new MarkupString(builder.ToString());
     }

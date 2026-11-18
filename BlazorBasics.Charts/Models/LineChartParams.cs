@@ -23,9 +23,12 @@ public class LineChartParams(
     int maxPointPerLine = 50,
     bool showLoading = true,
     bool showXLines = true,
-    bool showYLines = true
+    bool showYLines = true,
+    Func<LineChartPoint, string> pointPopup = null
     )
 {
+    private readonly Func<LineChartPoint, string> ChosenPointPopup = ChoosePointPopup(formatterLabelPopup, pointPopup);
+
     public int Width => width;
     public int Height => height;
     public string BackgroundColor => backgroundColor;
@@ -52,11 +55,31 @@ public class LineChartParams(
             return rotationAngleXLabel;
         }
     }
-    public Func<string, string> FormatterLabelPopup => formatterLabelPopup;
+    [Obsolete("Use pointPopup, which receives the whole LineChartPoint. FormatterLabelPopup will be removed in the next version with breaking changes.")]
+    public Func<string, string> FormatterLabelPopup { get; } = formatterLabelPopup;
+    public Func<LineChartPoint, string> PointPopup => ChosenPointPopup;
     public Func<LineData, string> LegendLabel => legendLabel;
     public LineChartPointOptions PointOptions { get; } = pointOptions ?? new LineChartPointOptions();
     public int MaxPointPerLine => maxPointPerLine;
     public bool ShowLoading => showLoading;
     public bool ShowYLines => showYLines;
     public bool ShowXLines => showXLines;
+
+    private static Func<LineChartPoint, string> ChoosePointPopup(
+        Func<string, string> valuePopup, Func<LineChartPoint, string> pointPopup)
+    {
+        if (valuePopup is not null && pointPopup is not null)
+        {
+            throw new ArgumentException(
+                "Use either pointPopup or the obsolete formatterLabelPopup, not both.", nameof(pointPopup));
+        }
+
+        Func<LineChartPoint, string> chosenPopup = pointPopup;
+        if (valuePopup is not null)
+        {
+            chosenPopup = point => valuePopup(point.Value);
+        }
+
+        return chosenPopup;
+    }
 }

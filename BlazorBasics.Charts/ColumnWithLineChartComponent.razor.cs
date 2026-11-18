@@ -163,6 +163,14 @@ public partial class ColumnWithLineChartComponent
         }
     }
 
+    private string PointFill(ColumnDataItem item, int index, ColumnBar point,
+        ColumnWithLineSeries series, string percentage)
+    {
+        string chosenColour = Parameters.PointColour?.Invoke(
+            new ColumnWithLinePoint(item, index, series, percentage));
+        return string.IsNullOrWhiteSpace(chosenColour) ? point.Color : chosenColour;
+    }
+
     void ShowPrimaryValues()
     {
         HideLabels();

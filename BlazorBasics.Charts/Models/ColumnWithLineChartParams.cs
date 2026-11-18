@@ -20,4 +20,5 @@ public class ColumnWithLineChartParams
     public Func<ColumnDataItem, string> SecondaryValueLabelFormatter { get; set; }
     public Func<ColumnDataItem, string> BottomLabelFormatter { get; set; }
     public Func<ColumnDataItem, string> TooltipFormatter { get; set; }
+    public Func<ColumnWithLinePoint, string> PointColour { get; set; }
 }

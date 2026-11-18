@@ -30,6 +30,14 @@ Version 1.4 removes the options that never had any effect:
 * `PieChartParams` no longer has `Saturation` and `Luminosity`, nor their constructor parameters. A `PieChartParams` built with positional arguments after `height` must name them now, for example `new PieChartParams(150, 150, separationOffset: 20)`.
 * `ColumnWithLineChartParams` no longer has `Width` and `BackgroundColor`. Size the chart with `Height`, `BarWidth` and `Spacing`, and give it a background with the `style` or `class` of the component.
 
+Version 1.4.21 marks `LineChartParams.FormatterLabelPopup` as obsolete. It keeps working, but it only receives the value; move to `pointPopup`, which receives the whole `LineChartPoint`, before the next version with breaking changes removes it. Giving both throws an `ArgumentException`:
+``` csharp
+// before
+new LineChartParams(formatterLabelPopup: value => $"<strong>{value}</strong>");
+// now
+new LineChartParams(pointPopup: point => $"{point.Label}<br><strong>{point.Value}</strong>");
+```
+
 ## What every chart shares
 * **`Parameters`**: every component takes an optional `Parameters` object with its options. Left out, the defaults below are used.
 * **`class` and `style`**: any `class` or `style` attribute given to a component is added to its wrapper, so the page can size and place it.
@@ -404,7 +412,8 @@ new LineChartParams(
     int maxPointPerLine = 50,
     bool showLoading = true,
     bool showXLines = true,
-    bool showYLines = true)
+    bool showYLines = true,
+    Func<LineChartPoint, string> pointPopup = null)
 ```
 | Option | Default | What it does |
 |---|---|---|
@@ -422,7 +431,8 @@ new LineChartParams(
 | `ShowLegend` | `true` | Shows the legend under the chart. |
 | `RotatedXLabels` | `false` | Rotates the X labels. They are also rotated on their own when they do not fit. When they do not fit even rotated, only five are written: the first, the last, the middle one and the two halfway between. |
 | `RotationAngleXLabel` | 45 | Angle of the rotated X labels, from 0 to 90. Any other value throws an `ArgumentException`. |
-| `FormatterLabelPopup` | `null` | Turns the value of a clicked dot into the markup of its popup. By default the value is written in bold. |
+| `PointPopup` | `null` | Turns the clicked dot, as a `LineChartPoint`, into the markup of its popup. By default its X label, when there is one, and its value in bold. |
+| `FormatterLabelPopup` | `null` | **Obsolete**, use `PointPopup`. Turns only the value of the clicked dot into the markup of its popup. Giving both throws an `ArgumentException`. |
 | `LegendLabel` | `null` | Turns a series into the markup of its legend entry. By default a dot of its colour and its name. |
 | `PointOptions` | see below | Which dots are drawn. |
 | `MaxPointPerLine` | 50 | Most dots drawn per series. A longer series keeps one value out of every few, plus the last one, so it draws faster; the X labels and their grid lines still follow every value. Set it to the number of values to draw them all. |
@@ -435,16 +445,24 @@ new LineChartPointOptions(
     bool visibleMaxPoint = true,
     bool visibleMinPoint = true,
     bool visibleMaxPointLine = false,
-    bool visibleMinPointLine = false)
+    bool visibleMinPointLine = false,
+    Func<LineChartPoint, string> pointColour = null)
 ```
 | Option | Default | What it does |
 |---|---|---|
 | `VisibleAllPoints` | `false` | Draws a dot at every value. |
 | `VisibleMaxPoint`, `VisibleMinPoint` | `true` | When not every dot is drawn, draws the highest and the lowest dot of each series. |
 | `VisibleMaxPointLine`, `VisibleMinPointLine` | `false` | Draws a dashed line across the chart at the highest value of all series (green) and at the lowest (red). |
+| `PointColour` | `null` | Colour of each dot, chosen from its `LineChartPoint`. Returning `null` or an empty text keeps the colour of its series. The `LineChartPoint` of the click and of the popup carries the colour finally used. |
+
+``` csharp
+// dots of the days without values take a colour of their own, the line still goes through them
+new LineChartPointOptions(visibleAllPoints: true,
+    pointColour: point => point.Value == "0" ? "transparent" : null)
+```
 
 ### What the user can do with it
-* Clicking a dot opens a popup with its value, written by `FormatterLabelPopup`. Clicking the popup closes it.
+* Clicking a dot opens a popup with its X label and its value, or what `PointPopup` writes. Clicking the popup closes it.
 * Clicking a series in the legend leaves only that series on the chart, with all its dots. Clicking it again, or clicking anywhere else on the chart, brings every series back.
 
 ### A popup of your own
@@ -452,10 +470,11 @@ new LineChartPointOptions(
 <LineChartComponent Data=ChartData Parameters=LineParams />
 
 @code {
-    LineChartParams LineParams = new(formatterLabelPopup: value =>
-        $"<div style='background-color: blue; color: white; padding: 6px 12px; border-radius: 6px;'><strong>{value}</strong></div>");
+    LineChartParams LineParams = new(pointPopup: point =>
+        $"<div style='background-color: {point.Colour}; color: white; padding: 6px 12px; border-radius: 6px;'>{point.Label}<br><strong>{point.Value}</strong></div>");
 }
 ```
+The popup receives the same `LineChartPoint` as `OnPointClick`: series, colour, index, value and X label.
 
 # Ring Percentage
 A ring filled up to a percentage, with the percentage written in the middle.
@@ -564,6 +583,7 @@ Every option is a property with a setter, to be given with an object initializer
 | `PrimaryValueLabelFormatter`, `SecondaryValueLabelFormatter` | `null` | Text over each point of the primary or secondary line. By default its percentage. |
 | `BottomLabelFormatter` | `null` | Text under each column. By default the `Label` of the item. |
 | `TooltipFormatter` | `null` | Markup of the tooltip shown when an item is clicked. By default its label and both values. |
+| `PointColour` | `null` | Colour of each point of the lines, chosen from its `ColumnWithLinePoint`, which says the item and the line. Returning `null` or an empty text keeps the colour of its line. |
 
 ### What the user can do with it
 * Clicking a column or a point shows the tooltip of its item. Clicking a point also writes its value.
