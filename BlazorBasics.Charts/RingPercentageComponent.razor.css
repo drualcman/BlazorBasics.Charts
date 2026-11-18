@@ -17,7 +17,6 @@
     transition: stroke-dashoffset 0.6s ease 0s;
     transform: rotate(180deg);
     transform-origin: center;
-    stroke: url('#progress-ring-gradient');
     stroke-width: var(--StrokeWidth);
     stroke-dasharray: var(--Circumference);
     stroke-dashoffset: var(--Offset);

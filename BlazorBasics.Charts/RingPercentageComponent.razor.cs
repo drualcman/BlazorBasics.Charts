@@ -11,8 +11,8 @@ public partial class RingPercentageComponent
     {
         if(Attributes is not null && Attributes.TryGetValue("class", out object css))
             WrapperCss = css.ToString();
-        Style = $"--Width: {(Parameters.Width > 0 ? Parameters.Width.ToString(CultureInfo.InvariantCulture) : "auto")}px; " +
-                $"--Height: {(Parameters.Width > 0 ? Parameters.Height.ToString(CultureInfo.InvariantCulture) : "auto")}px; " +
+        Style = $"--Width: {CssSize(Parameters.Width)}; " +
+                $"--Height: {CssSize(Parameters.Height)}; " +
                 $"--LabelColor: {Parameters.LabelColor.ToString(CultureInfo.InvariantCulture)}; " +
                 $"--FromColor: {Parameters.FromColor.ToString(CultureInfo.InvariantCulture)}; " +
                 $"--ToColor: {Parameters.ToColor.ToString(CultureInfo.InvariantCulture)}; " +
@@ -28,9 +28,19 @@ public partial class RingPercentageComponent
 
     private double CalculateOffset() => CalculateCircumference() - CalculateCircumference() * Percentage / 100 - CalculateCircumference() / 360.0;
 
+    private const int DEFAULT_SIZE = 120;
+
+    private readonly string GradientId = $"progress-ring-gradient-{Guid.NewGuid():N}";
+
+    private static string CssSize(int pixels) =>
+        pixels > 0 ? $"{pixels.ToString(CultureInfo.InvariantCulture)}px" : "auto";
+
+    private int FontReferenceSize =>
+        Parameters.Width > 0 ? Parameters.Width : Parameters.Height > 0 ? Parameters.Height : DEFAULT_SIZE;
+
     public string CalculateFontSize()
     {
-        int fontSize = (int)(Parameters.Width / Parameters.FontSizeRatio);
+        int fontSize = (int)(FontReferenceSize / Parameters.FontSizeRatio);
         return $"{fontSize.ToString(CultureInfo.InvariantCulture)}px";
     }
 }
