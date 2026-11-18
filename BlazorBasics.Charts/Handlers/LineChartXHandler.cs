@@ -78,15 +78,8 @@ internal class LineChartXHandler
             var data = Data.First();
             if (data.Values.Count() == labelCount)
             {
-                List<ChartPoint> point = ChartData
-                    .FirstOrDefault(p => p.Name == data.Name && p.Color == (string.IsNullOrEmpty(data.Color) ? "black" : data.Color))
-                    ?.Values.ToList();
-
-                if (point is not null && (i < point.Count))
-                {
-                    ChartPoint selection = LineChartCoordinatesHandler.GetCoordinates(point[i]);
-                    x = (int)Math.Ceiling(selection.X) - AxisGap;
-                }
+                ChartPoint selection = LineChartCoordinatesHandler.GetCoordinates(new ChartPoint(i + 1, 0, label));
+                x = (int)Math.Ceiling(selection.X) - AxisGap;
             }
             int xLabel = x + AxisGap;
             int fontSize = 12;

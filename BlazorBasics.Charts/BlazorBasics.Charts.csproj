@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+		<TargetFrameworks>net8.0;net9.0;net10.0;net11.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.3.19</Version>
+		<Version>1.3.20</Version>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Authors>Sergi Ortiz Gomez</Authors>
@@ -16,7 +16,7 @@
 		<PackageTags>charts;pie;bars;stacked;lines;ring;percentage;blazor;blazor server; blazor webassembly</PackageTags>
 		<PackageId>BlazorBasics.Charts</PackageId>
 		<Product>BlazorBasics.Charts</Product>
-		<PackageReleaseNotes>Click callbacks on the Column, Bar, StackedBar and Line charts, and on the points of the lines of the ColumnWithLine chart, carrying the value behind whatever was clicked. New StackedBarChartComponent, one single bar split into the share every value takes of the whole, in either orientation. Column and Bar charts take a ColumnFillReference to fill against the highest value or against the total, and a ColumnLabelPlacement to put the labels at the bottom, top, left or right. Column chart labels can be rotated, and their font size is configurable. Existing charts keep their previous look.</PackageReleaseNotes>
+		<PackageReleaseNotes>Adds net11.0 and updates Microsoft.AspNetCore.Components.Web to the latest version of every framework. Fixes the X labels and grid lines of the Line chart when a series has more points than MaxPointPerLine: they were placed by the position of the point in the reduced series instead of by its X, so the labels came out of order and the grid lines piled up on the right.</PackageReleaseNotes>
 		<PackageProjectUrl>https://github.com/drualcman/BlazorBasics.Charts</PackageProjectUrl>
 	</PropertyGroup>
 
@@ -49,9 +49,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.30" Condition="'$(TargetFramework)' == 'net8.0'" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.19" Condition="'$(TargetFramework)' == 'net9.0'" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.11" Condition="'$(TargetFramework)' == 'net10.0'" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.34" Condition="'$(TargetFramework)' == 'net8.0'" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.23" Condition="'$(TargetFramework)' == 'net9.0'" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.15" Condition="'$(TargetFramework)' == 'net10.0'" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="11.0.0" Condition="'$(TargetFramework)' == 'net11.0'" />
 	</ItemGroup>
 
 	<ItemGroup>
